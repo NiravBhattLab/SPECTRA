@@ -171,8 +171,11 @@ if nSol>1
         end
         prevSols = {};
         for j=2:nSol
-            prevSols = [prevSols;reacInd];
-            [reacInd,~] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,[],prevSols);
+            prevSols = [prevSols;find(reacInd)];
+            [reacInd,~,stat] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,[],prevSols);
+            if stat~=1
+                break
+            end
             Mod = removeRxns(model, setdiff(model.rxns,model.rxns(reacInd)));
             if remGene
                 Mod = removeUnusedGenes(Mod);

@@ -105,15 +105,18 @@ elseif strcmp(probType,'MILP')
     Aineq2 = [temp1(dir0,:),temp2];
     bineq2 = zeros(n_,1);
     csenseineq2 = repmat('L',n_,1); % lesser than
-
+    
+    
     Aineq3=[];bineq3=[];csenseineq3=[];
-    for id=1:numel(prevSols)
-        temp = find(dir0);
-        temp = find(ismember(temp,prevSols{id}));
-        temp =temp';
-        Aineq3 = [Aineq3;[zeros(1,n),temp]];
-        bineq3 = [bineq3;sum(temp)-1];
-        csenseineq3 = [csenseineq3;'L'];
+    if exist('prevSols', 'var') && ~isempty(prevSols)
+        for id=1:numel(prevSols)
+            temp = find(dir0);
+            temp = ismember(temp,prevSols{id});
+            temp =temp';
+            Aineq3 = [Aineq3;[zeros(1,n),temp]];
+            bineq3 = [bineq3;sum(temp)-1];
+            csenseineq3 = [csenseineq3;'L'];
+        end
     end
 
     % bounds
@@ -139,9 +142,13 @@ elseif strcmp(probType,'MILP')
     end
     solution = solveCobraMILP(MILPproblem,'timeLimit', solveTime);
     stat =solution.stat;
-    x = solution.cont;
-    z = solution.int;
-    reacInd = abs(x(1:n))>=tol*1e-7;
+    if stat==1
+        x = solution.cont;
+        z = solution.int;
+        reacInd = abs(x(1:n))>=tol*1e-7;
+    else
+        x=[];z=[];reacInd=[];
+    end
     % reacInd = abs(x(1:n))~=0;    
 elseif strcmp(probType,'DC')
     % equalities

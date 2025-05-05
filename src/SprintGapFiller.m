@@ -1,4 +1,4 @@
-function [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,weights,tol,nSol,probType,solveTime)
+function [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,weights,nSol,altSolMethod,probType,solveTime,remGene)
 % USAGE: 
 %   [Model,BlockedCoreRxns] = SprintGapFiller(model,core,weights,tol,nSol,probType,solveTime)
 %
@@ -10,14 +10,19 @@ function [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,weights,t
 %              as BlockedCoreRxns)
 % 
 % OPTIONAL INPUTS:
-%     weights:   weights for non-core reactions. More the weights, lesser
-%                the chance to get included in the final model (Default: ones)
-%     tol:       Minimum absolute flux required for a reaction to be unblocked (Default: 1e-4)
-%     nSol:      Number of alternative solutions required (Default: 1)
-%     probType:  Which method to use to find the minimal reaction set.
-%                accepted values: 'LP','MILP','DC'. (Default: 'LP')
-%     solveTime: maximum runtime for solving MILP problem (Default: 7200s)
-%
+%     tol:          Minimum absolute flux required for a reaction to be unblocked (Default: 1e-4)
+%     weights:      Weights for non-core reactions. More the weights, lesser
+%                   the chance to get included in the final model (Default: ones)
+%     nSol:         Number of alternative solutions required (Default: 1)
+%     altSolMethod: Method to find the alternate solutions.
+%                   accepted values: 'coreDirection', 'pathwayExclusion'.
+%                   Note: 'pathwayExclusion' works only for MILP probType
+%                   (Default: 'coreDirection')
+%     probType:     Which method to use to find the minimal reaction set.
+%                   accepted values: 'LP','MILP','DC'. (Default: 'LP')
+%     solveTime:    Maximum runtime for solving MILP problem (Default: 7200s)
+%     remGene:      Bool value indicating whether to remove the unused genes
+%                   or not (Default: 0 (doesn't remove the unused genes))
 % OUTPUTS:
 %     Model:           The consistent model (If nSol ==1). A cell
 %                      consisting of models (If nSol>1).
@@ -39,7 +44,9 @@ end
 if ~exist('probType', 'var') || isempty(probType)
     probType='LP';  
 end
-
+if ~exist('remGene', 'var') || isempty(remGene)
+    remGene=0;  
+end
 [~,n] = size(model.S); % number of metabolites and reactions
 IrR = model.ub<=0; % reactions irreversible in reverse direction
 temp = model.ub(IrR);
@@ -99,14 +106,16 @@ end
 
 flux = x(1:numel(model.rxns));
 Model = removeRxns(model, setdiff(model.rxns,model.rxns(reacInd)));
-
+if remGene
+    Model = removeUnusedGenes(Model);
+end
 if nSol>1
     % removing all the blocked reactions (this will be a consistent model)
     Nmodel = removeRxns(model,model.rxns(BlckdRxns));
     core2 = find(ismember(Nmodel.rxns,model.rxns(core)));
     [~,id] = ismember(Nmodel.rxns,model.rxns);
     weights2 = weights(id);
-    Models = sprintcore(Nmodel,core2,tol,weights2,nSol-1,probType,solveTime);
+    Models = sprintcore(Nmodel,core2,tol,weights2,nSol-1,altSolMethod,probType,solveTime,remGene);
     Model=[Models;Model];
 end
 
