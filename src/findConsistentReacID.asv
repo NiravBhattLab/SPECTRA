@@ -111,9 +111,7 @@ elseif strcmp(probType,'MILP')
         temp = find(dir0);
         temp = find(ismember(temp,prevSols{id}));
         temp =temp';
-        Aineq3 = [Aineq3;[zeros(1,n),temp]];
-        bineq3 = [bineq3;sum(temp)-1];
-        csenseineq3 = [csenseineq3;'L'];
+        Aineq3 = [Aineq3;[x]];
     end
 
     % bounds
@@ -125,14 +123,14 @@ elseif strcmp(probType,'MILP')
     ub = [ub;ones(n_,1)];
 
     % Set up MILP problem
-    MILPproblem.A=[Aeq;Aineq1;Aineq2;Aineq3];
-    MILPproblem.b=[beq;bineq1;bineq2;bineq3];
+    MILPproblem.A=[Aeq;Aineq1;Aineq2];
+    MILPproblem.b=[beq;bineq1;bineq2];
     MILPproblem.lb=lb;
     MILPproblem.ub=ub;
     MILPproblem.c=f;
     MILPproblem.osense=1; % minimise
     MILPproblem.vartype = [repmat('C',n,1);repmat('B',n_,1)];
-    MILPproblem.csense = [csenseeq; csenseineq1; csenseineq2;csenseineq3];
+    MILPproblem.csense = [csenseeq; csenseineq1; csenseineq2];
     changeCobraSolverParams('MILP', 'feasTol', 1e-9);
     if exist('x0', 'var')&&~isempty(x0)
         MILPproblem.x0  = [x0;abs(x0(dir0))>1e-12]; 

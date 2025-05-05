@@ -1,25 +1,28 @@
-function [MicComModel,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,weights,tol,nSol,probType,solveTime)
+function [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,weights,tol,nSol,probType,solveTime)
 % USAGE: 
-%   [MicComModel,BlockedCoreRxns] = SprintGapFiller(model,core,weights,tol,nSol)
+%   [Model,BlockedCoreRxns] = SprintGapFiller(model,core,weights,tol,nSol,probType,solveTime)
 %
 % INPUTS:
-%     model:   Universal (in)consistent model with blocked reaction
+%     model:   COBRA model structure.
 %     core:    core reactions which has to be present in the final model
+%              (If any of the core reactions are blocked in the input model
+%              then it will not be included in the final model and returned
+%              as BlockedCoreRxns)
 % 
 % OPTIONAL INPUTS:
 %     weights:   weights for non-core reactions. More the weights, lesser
 %                the chance to get included in the final model (Default: ones)
 %     tol:       Minimum absolute flux required for a reaction to be unblocked (Default: 1e-4)
 %     nSol:      Number of alternative solutions required (Default: 1)
-%     probType:  Which optimization to use to find the minimal reaction set.
-%                accepted values: 'LP','MILP','DC'. (Default: LP)
+%     probType:  Which method to use to find the minimal reaction set.
+%                accepted values: 'LP','MILP','DC'. (Default: 'LP')
 %     solveTime: maximum runtime for solving MILP problem (Default: 7200s)
 %
 % OUTPUTS:
-%     MicComModel:     The consistent community model (If nSol ==1). A cell
-%                      consisting of community models (If nSol>1).
+%     Model:           The consistent model (If nSol ==1). A cell
+%                      consisting of models (If nSol>1).
 %     BlockedCoreRxns: Core reactions that cannot have absolute flux 
-%                      above the tol value
+%                      above the tol value in the input model
 % 
 % .. Author:
 %       - Pavan Kumar S, BioSystems Engineering and control (BiSECt) lab, IIT Madras
@@ -36,6 +39,7 @@ end
 if ~exist('probType', 'var') || isempty(probType)
     probType='LP';  
 end
+
 [~,n] = size(model.S); % number of metabolites and reactions
 IrR = model.ub<=0; % reactions irreversible in reverse direction
 temp = model.ub(IrR);
@@ -78,7 +82,7 @@ direction(core==1&flux<0) = -1;
 if any(core==1&flux==0)
     % what if convex combination of a flux obtained at two iterations
     % cancel out each other
-    warning('Any of the core reactions carry zero flux')
+    warning('Any of the core reactions carry zero flux have to rerun again')
 end
 
 if strcmp(probType,'MILP')
@@ -86,14 +90,15 @@ if strcmp(probType,'MILP')
         solveTime=7200;     
     end
     [reacInd,x] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,flux);
-else
+elseif strcmp(probType,'LP')
     LPs=LPs+1;
+    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,probType);
+elseif strcmp(probType,'DC')
     [reacInd,x] = findConsistentReacID(model,direction,weights,tol,probType);
 end
 
-
 flux = x(1:numel(model.rxns));
-MicComModel = removeRxns(model, setdiff(model.rxns,model.rxns(reacInd)));
+Model = removeRxns(model, setdiff(model.rxns,model.rxns(reacInd)));
 
 if nSol>1
     % removing all the blocked reactions (this will be a consistent model)
@@ -102,7 +107,7 @@ if nSol>1
     [~,id] = ismember(Nmodel.rxns,model.rxns);
     weights2 = weights(id);
     Models = sprintcore(Nmodel,core2,tol,weights2,nSol-1,probType,solveTime);
-    MicComModel=[Models;MicComModel];
+    Model=[Models;Model];
 end
 
 end
