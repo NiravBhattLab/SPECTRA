@@ -1,4 +1,4 @@
-function [ConsModel,LPS,flux] = sprintcore(model,core,tol,weights,nSol,altSolMethod,probType,solveTime,remGene)
+function [ConsModel,LPS,flux] = sprintcore(model,core,tol,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
 % USAGE:
 %   [ConsModel,LPS] = sprintcore(model,core,tol,weights,nSol)
 %
@@ -23,6 +23,8 @@ function [ConsModel,LPS,flux] = sprintcore(model,core,tol,weights,nSol,altSolMet
 %                 (Default: 7200s)
 %   remGene:      Bool value indicating whether to remove the unused genes
 %                 or not (Default: 0 (doesn't remove the unused genes))
+%   prevSols:     A cell of previosuly obtained solutions that should not
+%                 be a part of any new solutions
 %
 % OUTPUTS:
 %   ConsModel: The consistent model with no blocked reactions and has
@@ -47,6 +49,9 @@ if ~exist('probType', 'var') || isempty(probType)
 end
 if ~exist('remGene', 'var') || isempty(remGene)
     remGene=0;  
+end
+if ~exist('prevSols', 'var') || isempty(remGene)
+    prevSols={};  
 end
 
 [~,n] = size(model.S);
@@ -91,7 +96,7 @@ if strcmp(probType,'MILP')
     if ~exist('solveTime', 'var') || isempty(solveTime)
         solveTime=7200;     
     end
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,flux);
+    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,flux,prevSols);
 elseif strcmp(probType,'LP')
     LPS = LPS+1;
     [reacInd,x] = findConsistentReacID(model,direction,weights,tol,probType);
@@ -169,7 +174,6 @@ if nSol>1
         if ~strcmp(probType,'MILP')
             error('The probType has to be MILP for using pathwayExclusion method of finding alternate models')
         end
-        prevSols = {};
         for j=2:nSol
             prevSols = [prevSols;find(reacInd)];
             [reacInd,~,stat] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,[],prevSols);

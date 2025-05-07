@@ -60,6 +60,7 @@ prev_rxns = false(n,1);
 temp_core = true(n,1);
 flux = zeros(n,1); % initiating the flux vector that will carry directionality info
 LPs=0;
+core = ismember(1:n,core)';
 while sum(temp_core)~=sum(prev_rxns)
     LPs = LPs+2;
     prev_rxns = temp_core;
@@ -115,7 +116,8 @@ if nSol>1
     core2 = find(ismember(Nmodel.rxns,model.rxns(core)));
     [~,id] = ismember(Nmodel.rxns,model.rxns);
     weights2 = weights(id);
-    Models = sprintcore(Nmodel,core2,tol,weights2,nSol-1,altSolMethod,probType,solveTime,remGene);
+    reacInd2 = find(ismember(Nmodel.rxns,model.rxns(reacInd)));
+    Models = sprintcore(Nmodel,core2,tol,weights2,nSol-1,altSolMethod,probType,solveTime,remGene,{reacInd2});
     Model=[Models;Model];
 end
 
