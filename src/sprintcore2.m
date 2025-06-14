@@ -1,6 +1,6 @@
-function [ConsModel,LPS] = sprintcore2(model,core,tol,weights,nSol)
+function [ConsModel,LPS] = sprintcore2(model,core,tol,weights,nSol,remGene)
 % USAGE:
-%   [ConsModel,LPS] = sprintcore2(model,core,tol,weights,nSol)
+%   [ConsModel,LPS] = sprintcore2(model,core,tol,weights,nSol,remGene)
 %
 % INPUTS:
 %   model:   COBRA model structure. The model has to be consistent model
@@ -13,6 +13,8 @@ function [ConsModel,LPS] = sprintcore2(model,core,tol,weights,nSol)
 %   weights: weights for non-core reactions. More the weights, lesser
 %            the chance to get included in the final model (Default: ones)
 %   nSol:    Number of alternative solutions required (Default: 1)
+%   remGene: Bool value indicating whether to remove the unused genes
+%            or not (Default: 0 (doesn't remove the unused genes))
 %
 % OUTPUTS:
 %   ConsModel: The consistent model with no blocked reactions and has
@@ -31,6 +33,9 @@ if ~exist('weights', 'var') || isempty(weights)
 end
 if ~exist('nSol', 'var') || isempty(nSol)
     nSol=1;  
+end
+if ~exist('remGene', 'var') || isempty(remGene)
+    remGene=0;  
 end
 
 [~,n] = size(model.S);
@@ -54,7 +59,7 @@ flux = zeros(n,1);
 LPS=0;
 while any(temp_core)
     LPS = LPS+1;
-    [flux1,~] = forward(model,temp_core,tol);
+    [flux1,~] = forward(model,temp_core,tol,1);
     if sum(abs(flux))==0
         flux = flux1;
     else
@@ -66,7 +71,7 @@ while any(temp_core)
         break
     end
     LPS = LPS+1;
-    [flux2,~] = reverse(model,temp_core,tol);
+    [flux2,~] = reverse(model,temp_core,tol,1);
     c1=unifrnd(0.45,0.55,1);
     flux = (c1*flux)+((1-c1)*flux2);
     temp_core(core==1 & abs(flux)>=tol*1e-1) = 0; 
@@ -76,9 +81,11 @@ direction = zeros(n,1);
 direction(core==1&flux>0) = 1;
 direction(core==1&flux<0) = -1;
 LPS = LPS+1;
-reacInd = findConsistentReacID(model,direction,weights,tol); %LPminimal
+reacInd = findConsistentReacID(model,direction,weights,tol,1); %LPminimal
 ConsModel = removeRxns(model, setdiff(model.rxns,model.rxns(reacInd)));
-% ConsModel = removeUnusedGenes(ConsModel);
+if remGene
+    ConsModel = removeUnusedGenes(ConsModel);
+end
 if nSol>1
     ConsModel = {ConsModel};
     for j=2:nSol
@@ -88,9 +95,9 @@ if nSol>1
             LPS = LPS+1;
             r = randi(2);
             if r==1
-                [flux1,~] = forward(model,temp_core,tol);
+                [flux1,~] = forward(model,temp_core,tol,1);
             else
-                [flux1,~] = reverse(model,temp_core,tol);
+                [flux1,~] = reverse(model,temp_core,tol,1);
             end
             if sum(abs(flux))==0
                 flux = flux1;
@@ -104,9 +111,9 @@ if nSol>1
             end
             LPS = LPS+1;
             if r==1
-                [flux2,~] = reverse(model,temp_core,tol);
+                [flux2,~] = reverse(model,temp_core,tol,1);
             else
-                [flux2,~] = forward(model,temp_core,tol);
+                [flux2,~] = forward(model,temp_core,tol,1);
             end
             c1=unifrnd(0.45,0.55,1);
             flux = (c1*flux)+((1-c1)*flux2);
@@ -117,10 +124,11 @@ if nSol>1
         direction(core==1&flux>0) = 1;
         direction(core==1&flux<0) = -1;
         LPS = LPS+1;
-        reacInd = findConsistentReacID(model,direction,weights,tol); %LPminimal
+        reacInd = findConsistentReacID(model,direction,weights,tol,1); %LPminimal
         Mod = removeRxns(model, setdiff(model.rxns,model.rxns(reacInd)));
-        % Mod = removeUnusedGenes(ConsModel);
+        if remGene
+            Mod = removeUnusedGenes(Mod);
+        end
         ConsModel = [ConsModel;Mod];
     end
 end
-

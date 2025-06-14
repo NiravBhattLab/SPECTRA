@@ -1,6 +1,6 @@
-function [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,weights,nSol,altSolMethod,probType,solveTime,remGene)
+function [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene)
 % USAGE: 
-%   [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,weights,nSol,altSolMethod,probType,solveTime,remGene)
+%   [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene)
 %
 % INPUTS:
 %     model:   COBRA model structure.
@@ -11,6 +11,8 @@ function [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,weigh
 % 
 % OPTIONAL INPUTS:
 %     tol:          Minimum absolute flux required for a reaction to be unblocked (Default: 1e-4)
+%     gapFilltype:  Type of gapfilling to apply. Either 'topology' or
+%                   'stoichiometry' based. (Default:'stoichiometry')
 %     weights:      Weights for non-core reactions. More the weights, lesser
 %                   the chance to get included in the final model (Default: ones)
 %     nSol:         Number of alternative solutions required (Default: 1)
@@ -47,6 +49,11 @@ end
 if ~exist('remGene', 'var') || isempty(remGene)
     remGene=0;  
 end
+if ~exist('gapFilltype', 'var') || isempty(gapFilltype)
+    gapFilltype='stoichiometry';  
+end
+
+
 [~,n] = size(model.S); % number of metabolites and reactions
 IrR = model.ub<=0; % reactions irreversible in reverse direction
 temp = model.ub(IrR);
@@ -61,11 +68,19 @@ temp_core = true(n,1);
 flux = zeros(n,1); % initiating the flux vector that will carry directionality info
 LPs=0;
 core = ismember(1:n,core)';
+
+if strcmp(gapFilltype,'stoichiometry')
+    steadystate = 1;
+elseif strcmp(gapFilltype,'topology')
+    steadystate = 0;
+end
+
+
 while sum(temp_core)~=sum(prev_rxns)
     LPs = LPs+2;
     prev_rxns = temp_core;
     % maximizing number of reactions with forward flux
-    [flux1,~] = forwardcc(model,temp_core,tol);
+    [flux1,~] = forwardcc(model,temp_core,tol,steadystate);
     temp_core(abs(flux1)>=tol*0.99)=false;
     if sum(abs(flux))==0
         flux = flux1;
@@ -74,7 +89,7 @@ while sum(temp_core)~=sum(prev_rxns)
         flux = (c1*flux)+((1-c1)*flux1);
     end
     % maximizing number of reactions with reverse flux
-    [flux2,~] = reverse(model,temp_core,tol);
+    [flux2,~] = reverse(model,temp_core,tol,steadystate);
     temp_core(abs(flux2)>=tol*0.99)=false;
     
     c1=round(unifrnd(0.45,0.55,1),4);
@@ -97,12 +112,12 @@ if strcmp(probType,'MILP')
     if ~exist('solveTime', 'var') || isempty(solveTime)
         solveTime=7200;     
     end
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,flux);
+    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType,solveTime,flux);
 elseif strcmp(probType,'LP')
     LPs=LPs+1;
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,probType);
+    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType);
 elseif strcmp(probType,'DC')
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,probType);
+    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType);
 end
 
 flux = x(1:numel(model.rxns));

@@ -1,27 +1,29 @@
-function [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,x0,prevSols)
+function [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,steadyState,probType,solveTime,x0,prevSols)
 % USAGE:
-%   [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,x0,prevSols)
+%   [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,steadystate,probType,solveTime,x0,prevSols)
 %
 % INPUTS:
-%     model:     COBRA model structure.
-%     direction: A vector of size equal to number of reactions in the
-%                model. The unique elements in this vector has to be -1,0
-%                and 1 defining the flux directionality info.
-%     weights:   weights for non-core reactions. More the weights, lesser
-%                the chance to get included in the final model 
-%     tol:       tolerance level (minimum absolute flux that has to be carried
-%                by a reaction for it to be defined as consistent)
+%     model:       COBRA model structure.
+%     direction:   A vector of size equal to number of reactions in the
+%                  model. The unique elements in this vector has to be -1,0
+%                  and 1 defining the flux directionality info.
+%     weights:     weights for non-core reactions. More the weights, lesser
+%                  the chance to get included in the final model 
+%     tol:         tolerance level (minimum absolute flux that has to be carried
+%                  by a reaction for it to be defined as consistent)
+%     steadyState: Boolean value indicating whether to assume steady state
+%                  condition (S.v = 0) or accumulation condition (S.v >= 0)
 %
 % OPTIONAL INPUTS:
-%     probType:  'LP' (Default): Linear Programming, 'MILP': Mixed Integer Linear
-%                Programming, 'DC': Difference of convex functions
-%     solveTime: If probType is 'MILP', solveTime refers to the upper limit
-%                of solving time
-%     x0:        solution vector to initialize with for MILP problem. 
-%                This can be obtained from the LPforward and LPreverse
-%     prevSols:  A cell of previously obtained solutions that needs to be
-%                exclude in the current solution. Note: This works only for
-%                the probType 'MILP'
+%     probType:    'LP' (Default): Linear Programming, 'MILP': Mixed Integer Linear
+%                  Programming, 'DC': Difference of convex functions
+%     solveTime:   If probType is 'MILP', solveTime refers to the upper limit
+%                  of solving time
+%     x0:          solution vector to initialize with for MILP problem. 
+%                  This can be obtained from the LPforward and LPreverse
+%     prevSols:    A cell of previously obtained solutions that needs to be
+%                  exclude in the current solution. Note: This works only for
+%                  the probType 'MILP'
 %
 % OUTPUTS:
 %     reacInd: Reaction IDs corresponding to reactions that has to be
@@ -52,7 +54,11 @@ f = [zeros(n,1);weights(dir0)];
 % equalities
 Aeq = [model.S, sparse(m,n_)];
 beq = zeros(m,1);
-csenseeq = repmat('E',m,1); % equality
+if steadyState
+    csenseeq = repmat('E',m,1); % equality (For consistency based gap filling)
+else
+    csenseeq = repmat('G',m,1); % greater than (For topology based gap filling)
+end
 
 if strcmp(probType,'LP')
     % inequalities
@@ -154,7 +160,11 @@ elseif strcmp(probType,'DC')
     % equalities
     Aeq = model.S;
     beq = zeros(m,1);
-    csenseeq = repmat('E',m,1); % equality
+    if steadyState
+        csenseeq = repmat('E',m,1); % equality (For consistency based gap filling)
+    else
+        csenseeq = repmat('G',m,1); % greater than (For topology based gap filling)
+    end
     % bounds
     lb = model.lb;
     lb(direction==1)=max([tol*ones(sum(direction==1),1),lb(direction==1)],[],2);

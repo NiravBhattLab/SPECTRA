@@ -1,12 +1,14 @@
-function [flux,z] = forward(model,core,tol)
+function [flux,z] = forward(model,core,tol,steadyState)
 % USAGE:
-%   [flux,z] = forward(model,core,tol)
+%   [flux,z] = forward(model,core,tol,steadyState)
 %
 % INPUTS:
-%    model: COBRA model structure.
-%    core:  A binary vector indicating whether a core or non-core reaction
-%    tol:   tolerance level (minimum absolute flux that has to be carried
-%           by a reaction for it to be defined as consistent)
+%    model:       COBRA model structure.
+%    core:        A binary vector indicating whether a core or non-core reaction
+%    tol:         tolerance level (minimum absolute flux that has to be carried
+%                 by a reaction for it to be defined as consistent)
+%    steadyState: Boolean value indicating whether to assume steady state
+%                 condition (S.v = 0) or accumulation condition (S.v >= 0)
 %
 % OUTPUTS:
 %    flux:  Flux through the reactions in the COBRA model
@@ -25,7 +27,12 @@ f = -1*[zeros(n,1);unifrnd(1,1.1,n_rev_core,1)];
 % equalities
 Aeq = [model.S, sparse(m,n_rev_core)];
 beq = zeros(m,1);
-csenseeq = repmat('E',m,1); % equality
+
+if steadyState
+    csenseeq = repmat('E',m,1); % equality (For consistency based gap filling)
+else
+    csenseeq = repmat('G',m,1); % greater than (For topology based gap filling)
+end
 
 % inequalities
 temp1 = speye(n);
