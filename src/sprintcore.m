@@ -1,6 +1,6 @@
 function [ConsModel,LPS,flux] = sprintcore(model,core,tol,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
 % USAGE:
-%   [ConsModel,LPS] = sprintcore(model,core,tol,weights,nSol)
+%   [ConsModel,LPS,flux] = sprintcore(model,core,tol,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
 %
 % INPUTS:
 %   model:   COBRA model structure. The model has to be a consistent model

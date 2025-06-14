@@ -1,6 +1,6 @@
 function [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,x0,prevSols)
 % USAGE:
-%   reacInd = findConsistentReacID(model,direction,weights,tol)
+%   [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,probType,solveTime,x0,prevSols)
 %
 % INPUTS:
 %     model:     COBRA model structure.
@@ -191,6 +191,3 @@ elseif strcmp(probType,'DC')
     end
 end
 end
-
-
-

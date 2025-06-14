@@ -1,6 +1,6 @@
 function [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,weights,nSol,altSolMethod,probType,solveTime,remGene)
 % USAGE: 
-%   [Model,BlockedCoreRxns] = SprintGapFiller(model,core,weights,tol,nSol,probType,solveTime)
+%   [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,weights,nSol,altSolMethod,probType,solveTime,remGene)
 %
 % INPUTS:
 %     model:   COBRA model structure.
