@@ -52,7 +52,9 @@ end
 if ~exist('gapFilltype', 'var') || isempty(gapFilltype)
     gapFilltype='stoichiometry';  
 end
-
+if ~exist('solveTime', 'var') || isempty(solveTime)
+    solveTime=7200;     
+end
 
 [~,n] = size(model.S); % number of metabolites and reactions
 IrR = model.ub<=0; % reactions irreversible in reverse direction
@@ -109,9 +111,6 @@ if any(coreRxns==1&flux==0)
 end
 
 if strcmp(probType,'MILP')
-    if ~exist('solveTime', 'var') || isempty(solveTime)
-        solveTime=7200;     
-    end
     [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType,solveTime,flux);
 elseif strcmp(probType,'LP')
     LPs=LPs+1;
@@ -132,8 +131,7 @@ if nSol>1
     [~,id] = ismember(Nmodel.rxns,model.rxns);
     weights2 = weights(id);
     reacInd2 = find(ismember(Nmodel.rxns,model.rxns(reacInd)));
-    Models = sprintcore(Nmodel,core2,tol,weights2,nSol-1,altSolMethod,probType,solveTime,remGene,{reacInd2});
+    Models = sprintcore(Nmodel,core2,tol,gapFilltype,weights2,nSol-1,altSolMethod,probType,solveTime,remGene,{reacInd2});
     Model=[Models;Model];
 end
-
 end
