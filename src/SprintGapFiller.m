@@ -1,10 +1,10 @@
-function [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene)
+function [Model,BlockedCoreRxns,LPs] = SprintGapFiller(model,coreRxns,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene)
 % USAGE: 
-%   [Model,BlockedCoreRxns,flux,LPs] = SprintGapFiller(model,core,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene)
+%   [Model,BlockedCoreRxns,LPs] = SprintGapFiller(model,coreRxns,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene)
 %
 % INPUTS:
 %     model:   COBRA model structure.
-%     core:    core reactions which has to be present in the final model
+%     coreRxns:    core reactions which has to be present in the final model
 %              (If any of the core reactions are blocked in the input model
 %              then it will not be included in the final model and returned
 %              as BlockedCoreRxns)
@@ -67,7 +67,7 @@ prev_rxns = false(n,1);
 temp_core = true(n,1);
 flux = zeros(n,1); % initiating the flux vector that will carry directionality info
 LPs=0;
-core = ismember(1:n,core)';
+coreRxns = ismember(1:n,coreRxns)';
 
 if strcmp(gapFilltype,'stoichiometry')
     steadystate = 1;
@@ -97,12 +97,12 @@ while sum(temp_core)~=sum(prev_rxns)
     
 end
 BlckdRxns = find(temp_core);
-BlockedCoreRxns = model.rxns(intersect(find(core),BlckdRxns));
-core(temp_core) = 0; % not forcing any flux through the blocked reactions
+BlockedCoreRxns = model.rxns(intersect(find(coreRxns),BlckdRxns));
+coreRxns(temp_core) = 0; % not forcing any flux through the blocked reactions
 direction = zeros(n,1);
-direction(core==1&flux>0) = 1;
-direction(core==1&flux<0) = -1;
-if any(core==1&flux==0)
+direction(coreRxns==1&flux>0) = 1;
+direction(coreRxns==1&flux<0) = -1;
+if any(coreRxns==1&flux==0)
     % what if convex combination of a flux obtained at two iterations
     % cancel out each other
     warning('Any of the core reactions carry zero flux have to rerun again')
@@ -128,7 +128,7 @@ end
 if nSol>1
     % removing all the blocked reactions (this will be a consistent model)
     Nmodel = removeRxns(model,model.rxns(BlckdRxns));
-    core2 = find(ismember(Nmodel.rxns,model.rxns(core)));
+    core2 = find(ismember(Nmodel.rxns,model.rxns(coreRxns)));
     [~,id] = ismember(Nmodel.rxns,model.rxns);
     weights2 = weights(id);
     reacInd2 = find(ismember(Nmodel.rxns,model.rxns(reacInd)));

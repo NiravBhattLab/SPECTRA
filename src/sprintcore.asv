@@ -1,6 +1,6 @@
-function [ConsModel,LPS] = sprintcore(model,coreRxns,tol,gapFilltype,coreMets,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
+function [ConsModel,LPS,flux] = sprintcore(model,coreRxns,tol,gapFilltype,coreMets,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
 % USAGE:
-%   [ConsModel,LPS] = sprintcore(model,coreRxns,tol,gapFilltype,coreMets,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
+%   [ConsModel,LPS,flux] = sprintcore(model,coreRxns,tol,gapFilltype,coreMets,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
 %
 % INPUTS:
 %   model:    COBRA model structure. The model has to be a consistent model
@@ -11,7 +11,7 @@ function [ConsModel,LPS] = sprintcore(model,coreRxns,tol,gapFilltype,coreMets,we
 %   tol:          Tolerance level (minimum absolute flux that has to be carried
 %                 by all the reactions in the model) (Default: 1e-4)
 %   gapFilltype:  Type of gapfilling to apply. Either 'topology' or
-%                 'consistency' (stoichiometric matrix) based. (Default:'consistency')
+%                 'consistency' (stochiometric matrix) based. (Default:'consistency')
 %   coreMets:     Indices of metabolites that the model needs to produce. (Default: {}) 
 %   weights:      Weights for non-core reactions. More the weights, lesser
 %                 the chance to get included in the final model (Default: ones)
@@ -135,7 +135,7 @@ if metFlag % if there are any core metabolites
         for tempId =2:numel(no_flux_met)
             rxnsTemp = union(rxnsTemp,find(model.S(no_flux_met(tempId),:)));
         end
-        temp_core = ismember(1:numel(model.rxns),rxnsTemp)';
+        temp_core = ismember(1:numel(model.rxns),rxnsTemp);
         while any(temp_core)
             LPS = LPS+1;
             [flux1,~] = forward(model,temp_core,tol,steadystate);
@@ -247,7 +247,7 @@ if nSol>1
                     for tempId =2:numel(no_flux_met)
                         rxnsTemp = union(rxnsTemp,find(model.S(no_flux_met(tempId),:)));
                     end
-                    temp_core = ismember(1:numel(model.rxns),rxnsTemp)';
+                    temp_core = ismember(1:numel(model.rxns),rxnsTemp);
                     while any(temp_core)
                         LPS_ = LPS_+1;
                         [flux1,~] = forward(model,temp_core,tol,steadystate);
@@ -296,7 +296,7 @@ if nSol>1
             end 
             ConsModel = [ConsModel;Mod];
             LPS = [LPS;LPS_];
-        end
+      end
     elseif strcmp(altSolMethod,'pathwayExclusion')
         if ~strcmp(probType,'MILP')
             error('The probType has to be MILP for using pathwayExclusion method of finding alternate models')
@@ -313,7 +313,7 @@ if nSol>1
             end
             ConsModel = [ConsModel;Mod];
         end
-end
+    end
 end
 
 
@@ -321,14 +321,9 @@ function [temp_core,new_core,blockMets] = get_unblocked_metRxns(flux,model,no_fl
     new_core = intersect(find(temp_core),find(flux));
     cons_rxn_ids = find(flux);
     blockMets = setdiff(no_flux_met,find(sum(model.S(:,cons_rxn_ids)~=0,2)));
-    if isempty(blockMets)
-        temp_core = zeros(numel(model.rxns),1);
-    else
-        rxnsTemp = find(model.S(blockMets(1),:));
-        for tempId =2:numel(blockMets)
-            rxnsTemp = union(rxnsTemp,find(model.S(blockMets(tempId),:)));
-        end
-        temp_core = ismember(1:numel(model.rxns),rxnsTemp);
+    rxnsTemp = find(model.S(blockMets(1),:));
+    for tempId =2:numel(blockMets)
+        rxnsTemp = union(rxnsTemp,find(model.S(blockMets(tempId),:)));
     end
-    
+    temp_core = ismember(1:numel(model.rxns),rxnsTemp);
 end
