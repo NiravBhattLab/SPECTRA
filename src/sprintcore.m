@@ -11,7 +11,7 @@ function [ConsModel,LPS] = sprintcore(model,coreRxns,tol,gapFilltype,weights,nSo
 %   tol:          Tolerance level (minimum absolute flux that has to be carried
 %                 by all the reactions in the model) (Default: 1e-4)
 %   gapFilltype:  Type of gapfilling to apply. Either 'topology' or
-%                 'consistency' (stoichiometric matrix) based. (Default:'consistency')
+%                 'stoichiometry' (stoichiometric matrix) based. (Default:'stoichiometry')
 %   weights:      Weights for non-core reactions. More the weights, lesser
 %                 the chance to get included in the final model (Default: ones)
 %   nSol:         Number of alternative solutions required (Default: 1)

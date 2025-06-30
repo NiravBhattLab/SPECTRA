@@ -25,7 +25,7 @@ function GapFillAGORADraftModels(percent,probType,solveTime)
         if numel(core)~=numel(model.rxns)
             error('Missing consistent reactions in the universal model')
         end
-        model = sprintcore(Utemp,core,tol,'consistency',[],1,[],probType,solveTime);
+        model = sprintcore(Utemp,core,tol,'stoichiometry',[],1,[],probType,solveTime);
         save(['./GapfilledModels_',probType,'_',num2str(percent),'/',p{i}],'model')
         clear model
     end
