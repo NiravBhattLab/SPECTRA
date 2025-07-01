@@ -9,6 +9,9 @@ function GapFillAGORADraftModels(percent,probType,solveTime)
     tol = 1e-5;
     load('./AGORAmodel.mat') % consistent universal model of AGORA db
     mkdir(['./GapfilledModels_',probType,'_',num2str(percent)])
+    tempFiles = dir(['./GapfilledModels_',probType,'_',num2str(percent)]);
+    tempFiles = {tempFiles(3:end).name}';
+    p =  setdiff(p,tempFiles);
     for i=1:numel(p)
         load([IncompAGORA,'/',p{i}])
         if ~any(model.c)
@@ -25,7 +28,11 @@ function GapFillAGORADraftModels(percent,probType,solveTime)
         if numel(core)~=numel(model.rxns)
             error('Missing consistent reactions in the universal model')
         end
-        model = sprintcore(Utemp,core,tol,'stoichiometry',[],1,[],probType,solveTime);
+        try
+            model = sprintcore(Utemp,core,tol,'stoichiometry',[],1,[],probType,solveTime);
+        catch
+            continue
+        end
         save(['./GapfilledModels_',probType,'_',num2str(percent),'/',p{i}],'model')
         clear model
     end
