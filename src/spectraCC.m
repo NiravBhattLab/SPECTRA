@@ -1,6 +1,6 @@
-function [ConsReacIDS,LPS] = sprintcc(model,tol,consistencyType)
+function [ConsReacIDS,LPS] = spectraCC(model,tol,consistencyType)
 % USAGE:
-% [ConsReacIDS,LPS] = sprintcc(model,tol,consistencyType)
+% [ConsReacIDS,LPS] = spectraCC(model,tol,consistencyType)
 %
 % INPUTS:
 %    model: COBRA model structure.

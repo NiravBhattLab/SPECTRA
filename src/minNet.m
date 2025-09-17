@@ -1,6 +1,6 @@
-function [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,steadyState,probType,solveTime,x0,prevSols)
+function [reacInd,x,stat] = minNet(model,direction,weights,tol,steadyState,probType,solveTime,x0,prevSols)
 % USAGE:
-%   [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,steadystate,probType,solveTime,x0,prevSols)
+%   [reacInd,x,stat] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,x0,prevSols)
 %
 % INPUTS:
 %     model:       COBRA model structure.
@@ -15,15 +15,15 @@ function [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,ste
 %                  condition (S.v = 0) or accumulation condition (S.v >= 0)
 %
 % OPTIONAL INPUTS:
-%     probType:    'LP' (Default): Linear Programming, 'MILP': Mixed Integer Linear
-%                  Programming, 'DC': Difference of convex functions
-%     solveTime:   If probType is 'MILP', solveTime refers to the upper limit
+%     probType:    'minNetLP' (Default): Linear Programming, 'minNetMILP': Mixed Integer Linear
+%                  Programming, 'minNetDC': Difference of convex functions
+%     solveTime:   If probType is 'minNetMILP', solveTime refers to the upper limit
 %                  of solving time
 %     x0:          solution vector to initialize with for MILP problem. 
 %                  This can be obtained from the LPforward and LPreverse
 %     prevSols:    A cell of previously obtained solutions that needs to be
 %                  exclude in the current solution. Note: This works only for
-%                  the probType 'MILP'
+%                  the probType 'minNetMILP'
 %
 % OUTPUTS:
 %     reacInd: Reaction IDs corresponding to reactions that has to be
@@ -35,10 +35,10 @@ function [reacInd,x,stat] = findConsistentReacID(model,direction,weights,tol,ste
 %       - Pavan Kumar S, BioSystems Engineering and control (BiSECt) lab, IIT Madras
 
 if ~exist('probType', 'var') || isempty(probType)
-    probType='LP';     
+    probType='minNetLP';     
 end
 
-if strcmp(probType,'MILP')    
+if strcmp(probType,'minNetMILP')    
     if ~exist('solveTime', 'var') || isempty(solveTime)
         solveTime=7200;     
     end
@@ -60,7 +60,7 @@ else
     csenseeq = repmat('G',m,1); % greater than (For topology based gap filling)
 end
 
-if strcmp(probType,'LP')
+if strcmp(probType,'minNetLP')
     % inequalities
     temp1 = speye(n);
     temp2 = speye(n_);
@@ -99,7 +99,7 @@ if strcmp(probType,'LP')
         x=solution.full;
         reacInd = abs(x(1:n))>=tol*1e-7;
     end
-elseif strcmp(probType,'MILP')
+elseif strcmp(probType,'minNetMILP')
    % inequalities
     temp1 = speye(n);
     temp2 = -1*spdiag(model.lb(dir0));
@@ -156,7 +156,7 @@ elseif strcmp(probType,'MILP')
         x=[];z=[];reacInd=[];
     end
     % reacInd = abs(x(1:n))~=0;    
-elseif strcmp(probType,'DC')
+elseif strcmp(probType,'minNetDC')
     % equalities
     Aeq = model.S;
     beq = zeros(m,1);

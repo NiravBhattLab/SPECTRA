@@ -1,33 +1,33 @@
-function [Model,BlockedCoreRxns,LPs] = SprintGapFiller(model,coreRxns,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene)
+function [Model,BlockedCoreRxns,LPs] = spectraCCME(model,coreRxns,tol,consType,weights,nSol,altSolMethod,probType,solveTime,remGene)
 % USAGE: 
-%   [Model,BlockedCoreRxns,LPs] = SprintGapFiller(model,coreRxns,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene)
+%   [Model,BlockedCoreRxns,LPs] = spectraCCME(model,coreRxns,tol,consType,weights,nSol,altSolMethod,probType,solveTime,remGene)
 %
 % INPUTS:
-%     model:   COBRA model structure.
-%     coreRxns:    core reactions which has to be present in the final model
-%              (If any of the core reactions are blocked in the input model
-%              then it will not be included in the final model and returned
-%              as BlockedCoreRxns)
+%     model:    COBRA model structure.
+%     coreRxns: core reactions which has to be present in the final model
+%               (If any of the core reactions are blocked in the input model
+%               then it will not be included in the final model and returned
+%               as BlockedCoreRxns)
 % 
 % OPTIONAL INPUTS:
 %     tol:          Minimum absolute flux required for a reaction to be unblocked (Default: 1e-4)
-%     gapFilltype:  Type of gapfilling to apply. Either 'topology' or
-%                   'stoichiometry' based. (Default:'stoichiometry')
-%     weights:      Weights for non-core reactions. More the weights, lesser
-%                   the chance to get included in the final model (Default: ones)
+%     consType:     Type of constraints to apply. Either 'topology' or
+%                   'stoichiometry' constraints. (Default:'stoichiometry')
+%     weights:      Weights for non-core reactions. (Default: ones) %%%%%%%
 %     nSol:         Number of alternative solutions required (Default: 1)
 %     altSolMethod: Method to find the alternate solutions.
 %                   accepted values: 'coreDirection', 'pathwayExclusion'.
 %                   Note: 'pathwayExclusion' works only for MILP probType
 %                   (Default: 'coreDirection')
-%     probType:     Which method to use to find the minimal reaction set.
-%                   accepted values: 'LP','MILP','DC'. (Default: 'LP')
+%     probType:     Which method to use to extract the final model.
+%                   Accepted values: 'minNetLP','minNetMILP','minNetDC'.
+%                   (Default: 'minNetLP') %%%%%%%%%%%%%%%%
 %     solveTime:    Maximum runtime for solving MILP problem (Default: 7200s)
 %     remGene:      Bool value indicating whether to remove the unused genes
 %                   or not (Default: 0 (doesn't remove the unused genes))
 % OUTPUTS:
 %     Model:           The consistent model (If nSol ==1). A cell
-%                      consisting of models (If nSol>1).
+%                      consisting of alternate models (If nSol>1).
 %     BlockedCoreRxns: Core reactions that cannot have absolute flux 
 %                      above the tol value in the input model
 % 
@@ -44,13 +44,13 @@ if ~exist('nSol', 'var') || isempty(nSol)
     nSol =1;
 end
 if ~exist('probType', 'var') || isempty(probType)
-    probType='LP';  
+    probType='minNetLP';  
 end
 if ~exist('remGene', 'var') || isempty(remGene)
     remGene=0;  
 end
-if ~exist('gapFilltype', 'var') || isempty(gapFilltype)
-    gapFilltype='stoichiometry';  
+if ~exist('consType', 'var') || isempty(consType)
+    consType='stoichiometry';  
 end
 if ~exist('solveTime', 'var') || isempty(solveTime)
     solveTime=7200;     
@@ -71,9 +71,9 @@ flux = zeros(n,1); % initiating the flux vector that will carry directionality i
 LPs=0;
 coreRxns = ismember(1:n,coreRxns)';
 
-if strcmp(gapFilltype,'stoichiometry')
+if strcmp(consType,'stoichiometry')
     steadystate = 1;
-elseif strcmp(gapFilltype,'topology')
+elseif strcmp(consType,'topology')
     steadystate = 0;
 end
 
@@ -110,13 +110,13 @@ if any(coreRxns==1&flux==0)
     warning('Any of the core reactions carry zero flux have to rerun again')
 end
 
-if strcmp(probType,'MILP')
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType,solveTime,flux);
-elseif strcmp(probType,'LP')
+if strcmp(probType,'minNetMILP')
+    [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,flux);
+elseif strcmp(probType,'minNetLP')
     LPs=LPs+1;
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType);
-elseif strcmp(probType,'DC')
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType);
+    [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
+elseif strcmp(probType,'minNetDC')
+    [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
 end
 
 flux = x(1:numel(model.rxns));
@@ -131,7 +131,7 @@ if nSol>1
     [~,id] = ismember(Nmodel.rxns,model.rxns);
     weights2 = weights(id);
     reacInd2 = find(ismember(Nmodel.rxns,model.rxns(reacInd)));
-    Models = sprintcore(Nmodel,core2,tol,gapFilltype,weights2,nSol-1,altSolMethod,probType,solveTime,remGene,{reacInd2});
+    Models = sprintcore(Nmodel,core2,tol,consType,weights2,nSol-1,altSolMethod,probType,solveTime,remGene,{reacInd2});
     Model=[Models;Model];
 end
 end

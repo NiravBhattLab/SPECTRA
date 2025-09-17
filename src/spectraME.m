@@ -1,38 +1,42 @@
-function [ConsModel,LPS] = sprintcore(model,coreRxns,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
+function [Model,LPS] = spectraME(model,coreRxns,tol,consType,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
 % USAGE:
-%   [ConsModel,LPS] = sprintcore(model,coreRxns,tol,gapFilltype,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
+%   [Model,LPS] = spectraME(model,coreRxns,tol,consType,weights,nSol,altSolMethod,probType,solveTime,remGene,prevSols)
 %
 % INPUTS:
 %   model:    COBRA model structure. The model has to be a consistent model
-%   coreRxns: Indices of reactions that have to be present in the final
+%             (either topologically or stoichiometrically). Run spectraCC
+%             before running spectraME.
+%   coreRxns: Indices of reactions that has to be present in the final
 %             model
 %
 % OPTIONAL INPUTS:
 %   tol:          Tolerance level (minimum absolute flux that has to be carried
-%                 by all the reactions in the model) (Default: 1e-4)
-%   gapFilltype:  Type of gapfilling to apply. Either 'topology' or
-%                 'stoichiometry' (stoichiometric matrix) based. (Default:'stoichiometry')
-%   weights:      Weights for non-core reactions. More the weights, lesser
-%                 the chance to get included in the final model (Default: ones)
+%                 by all the reactions in the Model) (Default: 1e-4)
+%   consType:     Type of constraints to apply. Either 'topology' or
+%                 'stoichiometry' constraints. (Default:'stoichiometry')
+%   weights:      Weights for non-core reactions. (Default: ones)
+%                 %%%%%%%%%%
 %   nSol:         Number of alternative solutions required (Default: 1)
 %   altSolMethod: Method to find the alternate solutions.
 %                 accepted values: 'coreDirection', 'pathwayExclusion'.
-%                 Note: 'pathwayExclusion' works only for MILP probType
+%                 Note: 'pathwayExclusion' works only for MILP problems
 %                 (Default: 'coreDirection')
-%   probType:     Which method to use to find the minimal reaction set.
-%                 accepted values: 'LP','MILP','DC'. (Default: 'LP')
-%   solveTime:    maximum runtime for solving MILP problem, if probType=='MILP'
+%   probType:     Which method to use to extract the final model.
+%                 Accepted values: 'minNetLP','minNetMILP','minNetDC'.
+%                 (Default: 'minNetLP') %%%%%%%%%%%%%%%%
+%   solveTime:    maximum runtime for solving MILP problem. if
+%                 probType is an MILP problem %%%%%%%%%%%%
 %                 (Default: 7200s)
 %   remGene:      Bool value indicating whether to remove the unused genes
 %                 or not (Default: 0 (doesn't remove the unused genes))
-%   prevSols:     A cell of previosuly obtained solutions that should not
-%                 be a part of any new solutions
+%   prevSols:     A cell of previously obtained solutions that should not
+%                 be a part of any new solutions (works only for MILP probType)
 %
 % OUTPUTS:
-%   ConsModel: The consistent model with no blocked reactions and has
+%   Model:     The consistent model with no blocked reactions and has
 %              all the core reactions in them (If nSol==1). A cell 
 %              consisting of consistent models in them (If nSol > 1)
-%   LPS:       Number of LPs used to get ConsModel, if probType is 'LP'
+%   LPS:       Number of LPs used to get ConsModel, if probType is 'minNetLP'
 %
 % .. Author:
 %       - Pavan Kumar S, BioSystems Engineering and control (BiSECt) lab, IIT Madras
@@ -47,7 +51,7 @@ if ~exist('nSol', 'var') || isempty(nSol)
     nSol=1;  
 end
 if ~exist('probType', 'var') || isempty(probType)
-    probType='LP';  
+    probType='minNetLP';  
 end
 if ~exist('remGene', 'var') || isempty(remGene)
     remGene=0;  
@@ -55,8 +59,8 @@ end
 if ~exist('prevSols', 'var') || isempty(remGene)
     prevSols={};  
 end
-if ~exist('gapFilltype', 'var') || isempty(gapFilltype)
-    gapFilltype='stoichiometry';  
+if ~exist('consType', 'var') || isempty(consType)
+    consType='stoichiometry';  
 end
 
 [~,n] = size(model.S);
@@ -74,9 +78,9 @@ temp_core = coreRxns;
 flux = zeros(n,1);
 LPS=0;
 
-if strcmp(gapFilltype,'stoichiometry')
+if strcmp(consType,'stoichiometry')
     steadystate = 1;
-elseif strcmp(gapFilltype,'topology')
+elseif strcmp(consType,'topology')
     steadystate = 0;
 end
 
@@ -104,26 +108,26 @@ direction = zeros(n,1);
 direction(coreRxns==1&flux>0) = 1;
 direction(coreRxns==1&flux<0) = -1;
 
-if strcmp(probType,'MILP')
+if strcmp(probType,'minNetMILP')
     if ~exist('solveTime', 'var') || isempty(solveTime)
         solveTime=7200;     
     end
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType,solveTime,flux,prevSols);
-elseif strcmp(probType,'LP')
+    [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,flux,prevSols);
+elseif strcmp(probType,'minNetLP')
     LPS = LPS+1;
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType);
-elseif strcmp(probType,'DC')
-    [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType);
+    [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
+elseif strcmp(probType,'minNetDC')
+    [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
 end
 
 flux = x(1:numel(model.rxns));
-ConsModel = removeRxns(model, setdiff(model.rxns,model.rxns(reacInd)));
+Model = removeRxns(model, setdiff(model.rxns,model.rxns(reacInd)));
 if remGene
-    ConsModel = removeUnusedGenes(ConsModel);
+    Model = removeUnusedGenes(Model);
 end
 
 if nSol>1
-    ConsModel = {ConsModel};
+    Model = {Model};
     if strcmp(altSolMethod,'coreDirection')
         LPS = {LPS};    
         for j=2:nSol
@@ -162,16 +166,16 @@ if nSol>1
             direction = zeros(n,1);
             direction(coreRxns==1&flux>0) = 1;
             direction(coreRxns==1&flux<0) = -1;
-            if strcmp(probType,'MILP')
+            if strcmp(probType,'minNetMILP')
                 if ~exist('solveTime', 'var') || isempty(solveTime)
                     solveTime=7200;
                 end
-                [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType,solveTime,flux);
-            elseif strcmp(probType,'LP')
+                [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,flux);
+            elseif strcmp(probType,'minNetLP')
                 LPS_ = LPS_+1;
-                [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType);
-            elseif strcmp(probType,'DC')
-                [reacInd,x] = findConsistentReacID(model,direction,weights,tol,steadystate,probType);
+                [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
+            elseif strcmp(probType,'minNetDC')
+                [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
             end
     
             flux = x(1:numel(model.rxns));
@@ -179,16 +183,16 @@ if nSol>1
             if remGene
                 Mod = removeUnusedGenes(Mod);
             end 
-            ConsModel = [ConsModel;Mod];
+            Model = [Model;Mod];
             LPS = [LPS;LPS_];
         end
     elseif strcmp(altSolMethod,'pathwayExclusion')
-        if ~strcmp(probType,'MILP')
+        if ~contains(probType,'MILP')
             error('The probType has to be MILP for using pathwayExclusion method of finding alternate models')
         end
         for j=2:nSol
             prevSols = [prevSols;find(reacInd)];
-            [reacInd,~,stat] = findConsistentReacID(model,direction,weights,tol,steadystate,probType,solveTime,[],prevSols);
+            [reacInd,~,stat] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,[],prevSols);
             if stat~=1
                 break
             end
@@ -196,7 +200,7 @@ if nSol>1
             if remGene
                 Mod = removeUnusedGenes(Mod);
             end
-            ConsModel = [ConsModel;Mod];
+            Model = [Model;Mod];
         end
     end
 end
