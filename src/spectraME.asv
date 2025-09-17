@@ -118,9 +118,6 @@ elseif strcmp(probType,'minNetDC')
 elseif strcmp(probType,'growthOptim')
     [reacInd,x] = growthOptim(model,direction,weights,tol,steadyState);
 elseif strcmp(probType,'tradeOff')
-    if ~exist('solveTime', 'var') || isempty(solveTime)
-        solveTime=7200;     
-    end
     [reacInd,x] = tradeOff(model,direction,weights,tol,steadyState,solveTime,flux,prevSols);
 end
 
@@ -200,11 +197,7 @@ if nSol>1
     elseif strcmp(altSolMethod,'pathwayExclusion') % the problem has to be an milp problem
         for j=2:nSol
             prevSols = [prevSols;find(reacInd)];
-            if strcmp(probType,'minNetMILP')
-                [reacInd,~,stat] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,[],prevSols);
-            elseif strcmp(probType,'tradeOff')
-                [reacInd,~,stat] = tradeOff(model,direction,weights,tol,steadyState,solveTime,[],prevSols);
-            end
+            [reacInd,~,stat] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,[],prevSols);
             if stat~=1
                 break
             end

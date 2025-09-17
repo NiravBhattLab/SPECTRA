@@ -13,18 +13,19 @@ function [Model,BlockedCoreRxns,LPs] = spectraCCME(model,coreRxns,tol,consType,w
 %     tol:          Minimum absolute flux required for a reaction to be unblocked (Default: 1e-4)
 %     consType:     Type of constraints to apply. Either 'topology' or
 %                   'stoichiometry' constraints. (Default:'stoichiometry')
-%     weights:      Weights for non-core reactions. (Default: ones) %%%%%%%
+%     weights:      Weights for the reactions in the model. (Default: ones)
 %     nSol:         Number of alternative solutions required (Default: 1)
 %     altSolMethod: Method to find the alternate solutions.
 %                   accepted values: 'coreDirection', 'pathwayExclusion'.
 %                   Note: 'pathwayExclusion' works only for MILP probType
 %                   (Default: 'coreDirection')
 %     probType:     Which method to use to extract the final model.
-%                   Accepted values: 'minNetLP','minNetMILP','minNetDC'.
-%                   (Default: 'minNetLP') %%%%%%%%%%%%%%%%
-%     solveTime:    Maximum runtime for solving MILP problem (Default: 7200s)
+%                   Accepted values: 'minNetLP','minNetMILP','minNetDC','growthOptim','tradeOff'.
+%                   (Default: 'minNetLP')
+%     solveTime:    Maximum runtime for solving a MILP problem (Default: 7200s)
 %     remGene:      Bool value indicating whether to remove the unused genes
 %                   or not (Default: 0 (doesn't remove the unused genes))
+%
 % OUTPUTS:
 %     Model:           The consistent model (If nSol ==1). A cell
 %                      consisting of alternate models (If nSol>1).
@@ -117,6 +118,10 @@ elseif strcmp(probType,'minNetLP')
     [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
 elseif strcmp(probType,'minNetDC')
     [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
+elseif strcmp(probType,'growthOptim')
+    [reacInd,x] = growthOptim(model,direction,weights,tol,steadyState);
+elseif strcmp(probType,'tradeOff')
+    [reacInd,x] = tradeOff(model,direction,weights,tol,steadyState,solveTime,flux);
 end
 
 flux = x(1:numel(model.rxns));
@@ -131,7 +136,7 @@ if nSol>1
     [~,id] = ismember(Nmodel.rxns,model.rxns);
     weights2 = weights(id);
     reacInd2 = find(ismember(Nmodel.rxns,model.rxns(reacInd)));
-    Models = sprintcore(Nmodel,core2,tol,consType,weights2,nSol-1,altSolMethod,probType,solveTime,remGene,{reacInd2});
+    Models = spectraME(Nmodel,core2,tol,consType,weights2,nSol-1,altSolMethod,probType,solveTime,remGene,{reacInd2});
     Model=[Models;Model];
 end
 end

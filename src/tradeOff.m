@@ -1,6 +1,6 @@
-function [reacInd,x,stat] = tradeOff(model,direction,weights,tol,steadyState,probType,solveTime,x0,prevSols)
+function [reacInd,x,stat] = tradeOff(model,direction,weights,tol,steadyState,solveTime,x0,prevSols)
 % USAGE:
-%   [reacInd,x,stat] = tradeOff(model,direction,weights,tol,steadystate,probType,solveTime,x0,prevSols)
+%   [reacInd,x,stat] = tradeOff(model,direction,weights,tol,steadystate,solveTime,x0,prevSols)
 %
 % INPUTS:
 %     model:       COBRA model structure.
@@ -16,15 +16,11 @@ function [reacInd,x,stat] = tradeOff(model,direction,weights,tol,steadyState,pro
 %                  condition (S.v = 0) or accumulation condition (S.v >= 0)
 %
 % OPTIONAL INPUTS:
-%     probType:    'tradeOffMILP' (Default): Mixed Integer Linear
-%                  Programming, 'tradeOffDC': Difference of convex functions
-%     solveTime:   If probType is 'tradeOffMILP', solveTime refers to the upper limit
-%                  of solving time
+%     solveTime:   Upper limit of solving time (Default-7200)
 %     x0:          solution vector to initialize with for MILP problem. 
 %                  This can be obtained from the LPforward and LPreverse
 %     prevSols:    A cell of previously obtained solutions that needs to be
-%                  excluded in the current solution. Note: This works only for
-%                  the probType 'tradeOffMILP'
+%                  excluded in the current solution.
 %
 % OUTPUTS:
 %     reacInd: Reaction IDs corresponding to reactions that has to be
@@ -35,18 +31,13 @@ function [reacInd,x,stat] = tradeOff(model,direction,weights,tol,steadyState,pro
 % .. Author:
 %       - Pavan Kumar S, BioSystems Engineering and control (BiSECt) lab, IIT Madras
 
-if ~exist('probType', 'var') || isempty(probType)
-    probType='tradeOffMILP';     
-end
 
-if strcmp(probType,'tradeOffMILP')    
-    if ~exist('solveTime', 'var') || isempty(solveTime)
-        solveTime=7200;     
-    end
+if ~exist('solveTime', 'var') || isempty(solveTime)
+   solveTime=7200;     
 end
 
 [m,n] = size(model.S);
-dir0 = direction==0;
+dir0 = direction==0; % boolean value indicating if the reaction is non-core (1) or not (0)
 n_ = sum(dir0); % number of non core reactions
 n_rev = sum(dir0 & model.rev); % number of noncore reversible reactions
 
@@ -57,119 +48,111 @@ n_rev = sum(dir0 & model.rev); % number of noncore reversible reactions
 % objective
 f = [zeros(n,1);weights(dir0);zeros(n_rev*2,1)];
 
-% equalities
-Aeq = [model.S, sparse(m,n_+(n_rev*2))];
-beq = zeros(m,1);
+% stoichiometry or topology constraints
+Aeq1 = [model.S, sparse(m,n_+(n_rev*2))];
+beq1 = zeros(m,1);
+
 if steadyState
-    csenseeq = repmat('E',m,1); % equality (For consistency based model extraction)
+    csenseeq1 = repmat('E',m,1); % equality (For consistency based model extraction)
 else
-    csenseeq = repmat('G',m,1); % greater than (For topology based model extraction)
+    csenseeq1 = repmat('G',m,1); % greater than (For topology based model extraction)
 end
 
-if strcmp(probType,'tradeOffMILP')
-   % relation between the flux of non-core irreversible reactions and the
-   % corresponding binary variables
-    temp1 = speye(n);
-    temp =  max([tol*ones(sum(direction==0),1),model.lb(direction==0)],[],2);
 
-    temp2 = spdiag(temp);
+% relation between the flux of non-core irreversible reactions and the
+% corresponding binary variables
+temp1 = -1*speye(n);
+temp1 = temp1(dir0,:);
+temp2 = spdiag(tol*ones(n_,1));
+% getting the ids of irrev reactions in the non-core reactions
+temp = ~model.rev(dir0);
+temp1 = temp1(temp,:);
+temp2 = temp2(temp,:);
 
+Aineq1 = [temp1,temp2,sparse(sum(temp),n_rev*2)];
+bineq1 = zeros(sum(temp),1);
+csenseineq1 = repmat('L',sum(temp),1); % lesser than
 
-    Aineq1 = [temp1(dir0,:),temp2];
-    bineq1 = zeros(n_,1);
-    csenseineq1 = repmat('G',n_,1); % greater than
+temp2 = -1*spdiag(model.ub(dir0));
+temp2 = temp2(temp,:);
 
-    temp2 = -1*spdiag(model.ub(dir0));
-    Aineq2 = [temp1(dir0,:),temp2];
-    bineq2 = zeros(n_,1);
-    csenseineq2 = repmat('L',n_,1); % lesser than
-    
-    
-    Aineq3=[];bineq3=[];csenseineq3=[];
-    if exist('prevSols', 'var') && ~isempty(prevSols)
-        for id=1:numel(prevSols)
-            temp = find(dir0);
-            temp = ismember(temp,prevSols{id});
-            temp =temp';
-            Aineq3 = [Aineq3;[zeros(1,n),temp]];
-            bineq3 = [bineq3;sum(temp)-1];
-            csenseineq3 = [csenseineq3;'L'];
-        end
+Aineq2 = [temp1,temp2,sparse(sum(temp),n_rev*2)];
+bineq2 = zeros(sum(temp),1);
+csenseineq2 = repmat('L',sum(temp),1); % lesser than
+
+% constraints to ignore the previously obtained solutions
+Aineq3=[];bineq3=[];csenseineq3=[];
+if exist('prevSols', 'var') && ~isempty(prevSols)
+    for id=1:numel(prevSols)
+        temp = find(dir0);
+        temp = ismember(temp,prevSols{id});
+        temp =temp';
+        Aineq3 = [Aineq3;[zeros(1,n),temp,zeros(1,n_rev*2)]];
+        bineq3 = [bineq3;sum(temp)-1];
+        csenseineq3 = [csenseineq3;'L'];
     end
+end
 
-    % bounds
-    lb = model.lb;
-    lb(direction==1)=max([tol*ones(sum(direction==1),1),lb(direction==1)],[],2);
-    lb = [lb;zeros(n_,1)];
-    ub = model.ub;
-    ub(direction==-1)=-tol*ones(sum(direction==-1),1);
-    ub = [ub;ones(n_,1)];
+% constraints for reversible non-core reactions to carry flux only in
+% one direction. Either in forward direction of reverse direction. 
+% a + b = z
+temp1 = speye(n_);
+temp = model.rev(dir0);
+temp1 = temp1(temp,:);
 
-    % Set up MILP problem
-    MILPproblem.A=[Aeq;Aineq1;Aineq2;Aineq3];
-    MILPproblem.b=[beq;bineq1;bineq2;bineq3];
-    MILPproblem.lb=lb;
-    MILPproblem.ub=ub;
-    MILPproblem.c=f;
-    MILPproblem.osense=1; % minimise
-    MILPproblem.vartype = [repmat('C',n,1);repmat('B',n_,1)];
-    MILPproblem.csense = [csenseeq; csenseineq1; csenseineq2;csenseineq3];
-    changeCobraSolverParams('MILP', 'feasTol', 1e-9);
-    if exist('x0', 'var')&&~isempty(x0)
-        MILPproblem.x0  = [x0;abs(x0(dir0))>1e-12]; 
-    end
-    solution = solveCobraMILP(MILPproblem,'timeLimit', solveTime);
-    stat =solution.stat;
-    if stat==1
-        x = solution.cont;
-        z = solution.int;
-        reacInd = abs(x(1:n))>=tol*1e-7;
-    else
-        x=[];z=[];reacInd=[];
-    end
-    % reacInd = abs(x(1:n))~=0;    
-elseif strcmp(probType,'minNetDC')
-    % equalities
-    Aeq = model.S;
-    beq = zeros(m,1);
-    if steadyState
-        csenseeq = repmat('E',m,1); % equality (For consistency based gap filling)
-    else
-        csenseeq = repmat('G',m,1); % greater than (For topology based gap filling)
-    end
-    % bounds
-    lb = model.lb;
-    lb(direction==1)=max([tol*ones(sum(direction==1),1),lb(direction==1)],[],2);
-    
-    ub = model.ub;
-    ub(direction==-1)=-tol*ones(sum(direction==-1),1);
-   
+Aeq2 = [sparse(sum(temp),n), temp1, speye(n_rev), speye(n_rev)];
+beq2 = zeros(sum(temp),1);
+csenseeq2 = repmat('E',sum(temp),1); 
 
-    % Set up MILP problem
-    DCproblem.A=Aeq;
-    DCproblem.b=beq;
-    DCproblem.csense = csenseeq;
-    DCproblem.lb=lb;
-    DCproblem.ub=ub;
-    DCproblem.p = direction==0;
-    DCproblem.q = false(n,1);
-    DCproblem.r = ~DCproblem.p;
-    DCproblem.c = zeros(n,1);
-    DCproblem.osense=1;
-    DCproblem.lambda0=1;
-    DCproblem.k = weights;
-    solution = optimizeCardinality(DCproblem);
-    stat=solution.stat;
-    if stat~=1
-        fprintf('%s%s\n',num2str(solution.stat),' = solution.stat')
-        fprintf('%s%s\n',num2str(solution.origStat),' = solution.origStat')
-        warning('DC solution may not be optimal')
-        x =[];reacInd=[];
-    else
-        x=zeros(n,1);
-        x(direction==0) = solution.x;
-        x(direction~=0) = solution.z;
-        reacInd = abs(x(1:n))>=0.99*getCobraSolverParams('LP', 'feasTol');
-    end
+% constraint linking the binary variable, a and the flux through the
+% reversible non-core reactions
+
+temp1 = speye(n);
+temp1 = temp1(dir0 & model.rev,:); % ids of non-core reversible reactions
+temp = sum(dir0 & model.rev);
+Aineq4 = [temp1, sparse(temp,n_), -1*spdiag(tol*ones(temp,1)), spdiag(model.lb(dir0 & model.rev))];
+bineq4 = zeros(temp,1);
+csenseineq4 = repmat('G',temp,1);
+
+% constraint linking the binary variable, b and the flux through the
+% reversible non-core reactions
+
+temp1 = speye(n);
+temp1 = temp1(dir0 & model.rev,:); % ids of non-core reversible reactions
+temp = sum(dir0 & model.rev);
+Aineq5 = [temp1, sparse(temp,n_), -1*spdiag(model.ub(dir0 & model.rev)), spdiag(tol*ones(temp,1))];
+bineq5 = zeros(temp,1);
+csenseineq5 = repmat('L',temp,1);
+
+% bounds
+lb = model.lb;
+lb(direction==1)=max([tol*ones(sum(direction==1),1),lb(direction==1)],[],2);
+lb = [lb;zeros(n_+(2*n_rev),1)];
+ub = model.ub;
+ub(direction==-1)=-tol*ones(sum(direction==-1),1);
+ub = [ub;ones(n_+(2*n_rev),1)];
+
+% Set up MILP problem
+MILPproblem.A=[Aeq1;Aeq2;Aineq1;Aineq2;Aineq3;Aineq4;Aineq5];
+MILPproblem.b=[beq1;beq2;bineq1;bineq2;bineq3;bineq4;bineq5];
+MILPproblem.lb=lb;
+MILPproblem.ub=ub;
+MILPproblem.c=f;
+MILPproblem.osense=-1; % maximize
+MILPproblem.vartype = [repmat('C',n,1);repmat('B',n_*(2*n_rev),1)];
+MILPproblem.csense = [csenseeq1; csenseeq2; csenseineq1; csenseineq2; csenseineq3; csenseineq4; csenseineq5];
+changeCobraSolverParams('MILP', 'feasTol', 1e-9);
+if exist('x0', 'var')&&~isempty(x0)
+
+    MILPproblem.x0  = [x0;abs(x0(dir0))>1e-12;x0(dir0&model.rev)>1e-12;x0(dir0&model.rev)<-1e-12]; 
+end
+solution = solveCobraMILP(MILPproblem,'timeLimit', solveTime);
+stat =solution.stat;
+if stat==1
+    x = solution.cont;
+    z = solution.int;
+    reacInd = abs(x(1:n))>=tol*1e-7;
+else
+    x=[];z=[];reacInd=[];
 end
 end
