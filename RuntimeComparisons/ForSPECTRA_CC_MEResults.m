@@ -26,20 +26,20 @@ for i=1:numel(n)
         tbl(k,:)={'FC',n(i),nCore(j),time,LPs1+LPs2};
         k=k+1;
         
-        % sprintcc+sprintcore
+        % spectraCC+spectraME
         tic
-        [a,LPs1] = sprintcc(InconsModel,tol);
+        [a,LPs1] = spectraCC(InconsModel,tol);
         m =  removeRxns(InconsModel,InconsModel.rxns(setdiff([1:numel(InconsModel.rxns)],a)));
         cf = find(ismember(m.rxns,InconsModel.rxns(core)));
-        [m1,LPs2] = sprintcore(m,cf,tol);
+        [m1,LPs2] = spectraME(m,cf,tol);
         time = toc;
         tbl(k,:)={'SPcc_SPc',n(i),nCore(j),time,LPs1+LPs2};
         k=k+1;
         
-        % sprintgapfiller
+        % spectraCCME
         tic
         cs = find(ismember([1:numel(InconsModel.rxns)],core));
-        [m1,~,LPs] = SprintGapFiller(InconsModel,cs,tol);
+        [m1,~,LPs] = spectraCCME(InconsModel,cs,tol);
         time = toc;
         tbl(k,:)={'SP',n(i),nCore(j),time,LPs};
         k=k+1;
@@ -55,4 +55,3 @@ for i=1:numel(n)
         k=k+1;
     end
 end
-save('Results_ForSprintGapFillerResults')

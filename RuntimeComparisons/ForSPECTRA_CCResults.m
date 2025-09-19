@@ -26,14 +26,14 @@ for i=1:numel(n)
     a_swcc{i} = a2;
     
     tic
-    [a3,LPs] = sprintcc(m,tol);
+    [a3,LPs] = spectraCC(m,tol);
     t_spcc(i)=toc;
     a_spcc{i} = a3;
     LPS_spcc(i)=LPs;
 end
 tbl = table('Size',[530*3,4],'VariableTypes',{'string','double','double','double'},...
     'VariableNames',{'Algo','SizeOfModel','Runtime','LPS'});
-col1 = [repmat({'FastCC'},530,1);repmat({'SwiftCC'},530,1);repmat({'SprintCC'},530,1)];
+col1 = [repmat({'FastCC'},530,1);repmat({'SwiftCC'},530,1);repmat({'SPECTRA_CC'},530,1)];
 col2 = repmat(n',3,1);
 col3 = [t_fcc';t_swcc';t_spcc'];
 col4 = [LPS_fcc';ones(530,1);LPS_spcc'];

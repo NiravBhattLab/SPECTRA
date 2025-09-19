@@ -36,9 +36,9 @@ for i=1:numel(n)
     model_name=['FC_',num2str(i)];
     ModelQuality=checkModelQuality(ModelQuality,m,core_rxns,model_name,tol);
     
-    % sprintcore
+    % spectraME
     tic
-    [m,LPs] = sprintcore(model,core,tol);
+    [m,LPs] = spectraME(model,core,tol);
     time = toc;
     sprxns{i}=m.rxns;
     sptimes(i)=time;
@@ -46,9 +46,9 @@ for i=1:numel(n)
     model_name=['SP_',num2str(i)];
     ModelQuality=checkModelQuality(ModelQuality,m,core_rxns,model_name,tol);
     
-    % sprintcore2
+    % spectraME2
     tic
-    [m,LPs] = sprintcore2(model,core,tol);
+    [m,LPs] = spectraME2(model,core,tol);
     time = toc;
     sp2rxns{i}=m.rxns;
     sp2times(i)=time;
@@ -85,4 +85,4 @@ for i=1:numel(n)
     model_name=['SWwr_',num2str(i)];
     ModelQuality=checkModelQuality(ModelQuality,m,core_rxns,model_name,tol);
 end
-save('Results_SprintCoreRuntime')
+save('Results_SPECTRA_ME_Runtime')
