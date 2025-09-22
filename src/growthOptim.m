@@ -27,11 +27,14 @@ function [reacInd,x,stat] = growthOptim(model,direction,weights,tol,steadyState)
 [m,n] = size(model.S);
 dir0 = direction==0;
 
+temp = weights;
 weights = -1*weights;
-weights(find(model.c)) = -1*weights(find(model.c));
+weights(find(model.c)) = 0;
+c = zeros(n,1);
+c(find(model.c)) = temp(find(model.c));
 
 % objective
-f = [zeros(n,1);weights];
+f = [c;weights];
 
 % equalities
 Aeq = [model.S, sparse(m,n)];

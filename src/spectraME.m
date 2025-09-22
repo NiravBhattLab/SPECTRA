@@ -116,12 +116,12 @@ elseif strcmp(probType,'minNetLP')
 elseif strcmp(probType,'minNetDC')
     [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
 elseif strcmp(probType,'growthOptim')
-    [reacInd,x] = growthOptim(model,direction,weights,tol,steadyState);
+    [reacInd,x] = growthOptim(model,direction,weights,tol,steadystate);
 elseif strcmp(probType,'tradeOff')
     if ~exist('solveTime', 'var') || isempty(solveTime)
         solveTime=7200;     
     end
-    [reacInd,x] = tradeOff(model,direction,weights,tol,steadyState,solveTime,flux,prevSols);
+    [reacInd,x] = tradeOff(model,direction,weights,tol,steadystate,solveTime,flux,prevSols);
 end
 
 flux = x(1:numel(model.rxns));
@@ -181,12 +181,12 @@ if nSol>1
             elseif strcmp(probType,'minNetDC')
                 [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType);
             elseif strcmp(probType,'growthOptim')
-                [reacInd,x] = growthOptim(model,direction,weights,tol,steadyState);
+                [reacInd,x] = growthOptim(model,direction,weights,tol,steadystate);
             elseif strcmp(probType,'tradeOff')
                 if ~exist('solveTime', 'var') || isempty(solveTime)
                     solveTime=7200;
                 end
-                [reacInd,x] = tradeOff(model,direction,weights,tol,steadyState,solveTime,flux);
+                [reacInd,x] = tradeOff(model,direction,weights,tol,steadystate,solveTime,flux);
             end
     
             flux = x(1:numel(model.rxns));
@@ -203,7 +203,7 @@ if nSol>1
             if strcmp(probType,'minNetMILP')
                 [reacInd,~,stat] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,[],prevSols);
             elseif strcmp(probType,'tradeOff')
-                [reacInd,~,stat] = tradeOff(model,direction,weights,tol,steadyState,solveTime,[],prevSols);
+                [reacInd,~,stat] = tradeOff(model,direction,weights,tol,steadystate,solveTime,[],prevSols);
             end
             if stat~=1
                 break

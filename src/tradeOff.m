@@ -62,11 +62,10 @@ end
 % relation between the flux of non-core irreversible reactions and the
 % corresponding binary variables
 temp1 = -1*speye(n);
-temp1 = temp1(dir0,:);
 temp2 = spdiag(tol*ones(n_,1));
 % getting the ids of irrev reactions in the non-core reactions
 temp = ~model.rev(dir0);
-temp1 = temp1(temp,:);
+temp1 = temp1(~model.rev & dir0,:);
 temp2 = temp2(temp,:);
 
 Aineq1 = [temp1,temp2,sparse(sum(temp),n_rev*2)];
@@ -76,7 +75,7 @@ csenseineq1 = repmat('L',sum(temp),1); % lesser than
 temp2 = -1*spdiag(model.ub(dir0));
 temp2 = temp2(temp,:);
 
-Aineq2 = [temp1,temp2,sparse(sum(temp),n_rev*2)];
+Aineq2 = [-1*temp1,temp2,sparse(sum(temp),n_rev*2)];
 bineq2 = zeros(sum(temp),1);
 csenseineq2 = repmat('L',sum(temp),1); % lesser than
 
@@ -97,10 +96,10 @@ end
 % one direction. Either in forward direction of reverse direction. 
 % a + b = z
 temp1 = speye(n_);
-temp = model.rev(dir0);
+temp = find(model.rev(dir0));
 temp1 = temp1(temp,:);
 
-Aeq2 = [sparse(sum(temp),n), temp1, speye(n_rev), speye(n_rev)];
+Aeq2 = [sparse(sum(temp),n), -1*temp1, speye(n_rev), speye(n_rev)];
 beq2 = zeros(sum(temp),1);
 csenseeq2 = repmat('E',sum(temp),1); 
 
@@ -139,7 +138,7 @@ MILPproblem.lb=lb;
 MILPproblem.ub=ub;
 MILPproblem.c=f;
 MILPproblem.osense=-1; % maximize
-MILPproblem.vartype = [repmat('C',n,1);repmat('B',n_*(2*n_rev),1)];
+MILPproblem.vartype = [repmat('C',n,1);repmat('B',n_+(2*n_rev),1)];
 MILPproblem.csense = [csenseeq1; csenseeq2; csenseineq1; csenseineq2; csenseineq3; csenseineq4; csenseineq5];
 changeCobraSolverParams('MILP', 'feasTol', 1e-9);
 if exist('x0', 'var')&&~isempty(x0)
