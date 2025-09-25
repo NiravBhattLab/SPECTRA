@@ -7,40 +7,42 @@ tol=1e-4;
 n=1;
 model = topology_toy_model(n);
 consistencyType = 'stoichiometry';
-ConsReacIDS_stoi_1 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_stoi_1 = spectraCC(model,tol,consistencyType);
 
 consistencyType = 'topology';
-ConsReacIDS_topo_1 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_topo_1 = spectraCC(model,tol,consistencyType);
 
 % creating a toy model with n=2
 n=2;
 model = topology_toy_model(n);
 consistencyType = 'stoichiometry';
-ConsReacIDS_stoi_2 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_stoi_2 = spectraCC(model,tol,consistencyType);
 
 consistencyType = 'topology';
-ConsReacIDS_topo_2 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_topo_2 = spectraCC(model,tol,consistencyType);
 
 % creating a toy model with n=3
 n=3;
 model = topology_toy_model(n);
 consistencyType = 'stoichiometry';
-ConsReacIDS_stoi_3 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_stoi_3 = spectraCC(model,tol,consistencyType);
 
 consistencyType = 'topology';
-ConsReacIDS_topo_3 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_topo_3 = spectraCC(model,tol,consistencyType);
 
-%% Checking on a different toy model
+%% Checking on different toy models
 model = get_cc_toy_model_1();
 consistencyType = 'stoichiometry';
-ConsReacIDS_stoi_11 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_stoi_11 = spectraCC(model,tol,consistencyType);
 
 consistencyType = 'topology';
-ConsReacIDS_topo_11 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_topo_11 = spectraCC(model,tol,consistencyType);
+
+
 
 model = get_cc_toy_model_2();
 consistencyType = 'stoichiometry';
-ConsReacIDS_stoi_12 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_stoi_12 = spectraCC(model,tol,consistencyType);
 
 consistencyType = 'topology';
-ConsReacIDS_topo_12 = sprintcc(model,tol,consistencyType);
+ConsReacIDS_topo_12 = spectraCC(model,tol,consistencyType);

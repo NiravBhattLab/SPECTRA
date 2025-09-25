@@ -1,6 +1,8 @@
 clear
 model = three_pathway_toy_model();
-model.ub([1,6,9]) = 10;
+model.ub(:) =10;
+model.ub([1,6,9]) = 1;
+
 model.c(5)=1;
 core = 5;
 tol=1e-5;
@@ -31,7 +33,7 @@ nSol=1;
 
 % the tradeOff based objective
 consType = 'stoichiometry';
-weights = [1,1,-2,-1,1,-2,0,1,1,2,-1]';
+weights = [1,1,-2,-1,1,1,2,-1,-2,0,1]';
 probType = 'tradeOff';
 altSolMethod = {};
 nSol = 1;
