@@ -29,7 +29,7 @@ function GapFillAGORADraftModels(percent,probType,solveTime)
             error('Missing consistent reactions in the universal model')
         end
         try
-            model = sprintcore(Utemp,core,tol,'stoichiometry',[],1,[],probType,solveTime);
+            model = spectraME(Utemp,core,tol,'stoichiometry',[],1,[],probType,solveTime);
         catch
             continue
         end

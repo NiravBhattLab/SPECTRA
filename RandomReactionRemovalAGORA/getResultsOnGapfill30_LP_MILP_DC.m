@@ -1,0 +1,50 @@
+clear
+p = dir('./GapfilledModelsMILP_30');
+p = {p(3:end).name};
+
+tp_LP=[];fp_LP=[];tn_LP=[];fn_LP=[];
+pre_LP=[];rec_LP=[];f1_LP=[];
+
+tp_MILP=[];fp_MILP=[];tn_MILP=[];fn_MILP=[];
+pre_MILP=[];rec_MILP=[];f1_MILP=[];
+
+tp_DC=[];fp_DC=[];tn_DC=[];fn_DC=[];
+pre_DC=[];rec_DC=[];f1_DC=[];
+for i=1:numel(p)
+    consM = load(['./ConsAGORA/',p{i}]);
+    consM =consM.model;
+    
+    incompM_30 = load(['./IncompModels_30/',p{i}]);
+    incompM_30 =incompM_30.model;
+    
+    gapfillM_LP = load(['./GapfilledModels_30/',p{i}]);gapfillM_LP=gapfillM_LP.model;
+    gapfillM_MILP = load(['./GapfilledModelsMILP_30/',p{i}]);gapfillM_MILP=gapfillM_MILP.model;
+    gapfillM_DC = load(['./GapfilledModelsDC_30/',p{i}]);gapfillM_DC=gapfillM_DC.model;
+    
+    act = setdiff(consM.rxns,incompM_30.rxns);
+    predLP = setdiff(gapfillM_LP.rxns,incompM_30.rxns);
+    predMILP = setdiff(gapfillM_MILP.rxns,incompM_30.rxns);
+    predDC = setdiff(gapfillM_DC.rxns,incompM_30.rxns);
+    
+    temp = union(act,predLP);
+    temp = union(temp,predMILP);
+    temp = union(temp,predDC);
+    
+    act = ismember(temp,act); 
+    predLP = ismember(temp,predLP);
+    predMILP = ismember(temp,predMILP);
+    predDC = ismember(temp,predDC);
+    
+    tp_LP(i)=sum(act&predLP);fp_LP(i)=sum(~act&predLP);tn_LP(i)=sum(~act&~predLP);fn_LP(i)=sum(act&~predLP);
+    tp_MILP(i)=sum(act&predMILP);fp_MILP(i)=sum(~act&predMILP);tn_MILP(i)=sum(~act&~predMILP);fn_MILP(i)=sum(act&~predMILP);
+    tp_DC(i)=sum(act&predDC);fp_DC(i)=sum(~act&predDC);tn_DC(i)=sum(~act&~predDC);fn_DC(i)=sum(act&~predDC);
+    
+    pre_LP(i)=tp_LP(i)/(tp_LP(i)+fp_LP(i)); rec_LP(i)=tp_LP(i)/(tp_LP(i)+fn_LP(i)); f1_LP(i)=(2*pre_LP(i)*rec_LP(i))/(pre_LP(i)+rec_LP(i));
+    pre_MILP(i)=tp_MILP(i)/(tp_MILP(i)+fp_MILP(i)); rec_MILP(i)=tp_MILP(i)/(tp_MILP(i)+fn_MILP(i)); f1_MILP(i)=(2*pre_MILP(i)*rec_MILP(i))/(pre_MILP(i)+rec_MILP(i));
+    pre_DC(i)=tp_DC(i)/(tp_DC(i)+fp_DC(i)); rec_DC(i)=tp_DC(i)/(tp_DC(i)+fn_DC(i)); f1_DC(i)=(2*pre_DC(i)*rec_DC(i))/(pre_DC(i)+rec_DC(i));
+end 
+% clear consM incompM_30 gapfillM_30 incompM_20 gapfillM_20 incompM_10 gapfillM_10
+acc_LP = (tp_LP+tn_LP)./(tp_LP+tn_LP+fp_LP+fn_LP);
+acc_MILP = (tp_MILP+tn_MILP)./(tp_MILP+tn_MILP+fp_MILP+fn_MILP);
+acc_DC = (tp_DC+tn_DC)./(tp_DC+tn_DC+fp_DC+fn_DC);
+save('getResultsOnGapfill30_LP_MILP_DC_2')
