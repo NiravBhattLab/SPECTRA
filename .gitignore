@@ -33,3 +33,6 @@ BuildCancerModels/DepMapModels_Recon/swiftcore
 
 BuildCancerModels/DepMapModels_Recon/DepMapData.mat
 BuildCancerModels/DepMapModels_Recon/Results_BuildDepMapModels.mat
+
+gapFilledAGORA_DB/AGORA_new_db
+gapFilledAGORA_DB/AGORA2
