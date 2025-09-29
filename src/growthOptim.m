@@ -25,7 +25,6 @@ function [reacInd,x,stat] = growthOptim(model,direction,weights,tol,steadyState)
 
 
 [m,n] = size(model.S);
-dir0 = direction==0;
 
 temp = weights;
 weights = -1*weights;
