@@ -81,9 +81,6 @@ for k=1:numel(remaining)
         idx = ismember(Umodel.rxns,model.rxns);
         weights(idx) = 0;
 
-        
-
-
         % lower bound to the biomas reaction
         Umodel.lb(ismember(Umodel.rxns,bio_rxn{1})) = 0.1;
         % lower bound to the ATPM reaction

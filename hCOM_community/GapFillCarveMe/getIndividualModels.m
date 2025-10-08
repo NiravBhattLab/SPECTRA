@@ -23,8 +23,8 @@ for j = 1:numel(modelNames)
     m = models{j};
     [~,compSymbols]=arrayfun(@parseMetNames, m.mets);
     id_ex_met =find(ismember(compSymbols,'e'));
-    m = addExchangeRxn(m,m.mets(id_ex_met));
-    m = addExchangeRxn(m,'biomass[c]');
+    m = addExchangeRxn(m,m.mets(id_ex_met)); % adding exchange reactions for all the extracellular metabolites
+    m = addExchangeRxn(m,'biomass[c]'); % adding exchange reaction for biomass (this is intracellular)
     m.rxns = strrep(m.rxns,[modelNames{j},'_'],''); % removing the microbe name in rxns
     m.mets = strrep(m.mets,[modelNames{j},'_'],''); % removing the microbe name in mets
     id = find(ismember(m.rxns,'bio')); % getting the objective function
@@ -33,15 +33,10 @@ for j = 1:numel(modelNames)
     else
         m.c(id)=1;
     end
-    % changing the nomenclature similar to AGORA
-    m.rxns = strrep(m.rxns,'[e]','(e)');
-    m.rxns = strrep(m.rxns,'[c]','(c)');
-    m.rxns = strrep(m.rxns,'EX_biomass(c)','EX_biomass(e)');
+    
     m.lb(m.lb<0)=-1000;
     m.ub(:)=1000;
     m.modelName= modelNames{j};
     models{j,1} = m;
 end
 end
-
-
