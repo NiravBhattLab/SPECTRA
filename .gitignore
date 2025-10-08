@@ -36,3 +36,6 @@ BuildCancerModels/DepMapModels_Recon/Results_BuildDepMapModels.mat
 
 gapFilledAGORA_DB/AGORA_new_db
 gapFilledAGORA_DB/AGORA2
+
+gapFilledAGORA_DB/tsne_mat_all_rxns.csv
+gapFilledAGORA_DB/tsne_mat_new_rxns.csv
