@@ -1,0 +1,86 @@
+clear
+changeCobraSolver('gurobi','all')
+changeCobraSolverParams('LP', 'feasTol', 1e-8);
+changeCobraSolverParams('LP', 'optTol', 1e-8);
+
+% Loading the universal models
+load('./Universal_models/carvemeModelConv') % Carveme's universal model
+u = model;
+load('./Universal_models/carvemeModelGNconv') % Carveme's universal gram negative model
+load('./Universal_models/carvemeModelGPconv') % Carveme's universal gram positive model
+media = getSAACMedia(u,GrPosModel,GrNegModel); % getting the SAAC media
+tbl = readtable('gram_stain.csv');
+
+
+p = dir('./CarvemeDraftModels');
+p = {p(3:end).name}';
+p =  strrep(p,'.mat','');
+solutions = [];
+solutions_univ_model = [];
+for i=1:numel(p)
+    load(['./CarvemeDraftModels/',p{i}]);
+    ids =startsWith(model.rxns,'EX_'); % model's exchange reactions
+    [la,lb] = ismember(model.rxns(ids),media.exc_rxns);
+    if sum(la)~= sum(ids)
+        error('missing exchange reaction')
+    end
+    model.lb(ids) =  media.lb(lb);
+    model.ub(ids) = media.ub(lb);
+    sol = optimizeCbModel(model);
+    solutions(i) = sol.f;
+
+
+    bio_form = printRxnFormula(model,model.rxns(find(model.c)),0);
+    bio_rxn = model.rxns(find(model.c));
+    bio_rxnName =model.rxnNames(find(model.c));
+    
+    if strcmp(tbl.stain(i),'0')
+        Umodel = U;
+    elseif strcmp(tbl.stain(i),'-')
+        Umodel = GrNegModel;
+    elseif strcmp(tbl.stain(i),'+')
+        Umodel = GrPosModel;
+    end
+
+    Umodel = addReaction(Umodel,bio_rxn{1},'reactionName',bio_rxnName{1},'reactionFormula',bio_form{1});
+    Umodel.c(:)=0;
+    Umodel.c(ismember(Umodel.rxns,bio_rxn{1}))=1;
+    sol = optimizeCbModel(model);
+    solutions_univ_model(i) = sol.f;
+end
+
+function media = getSAACMedia(u,GrPosModel,GrNegModel)
+    media=struct();
+    ids =startsWith(u.rxns,'EX_');
+    media.exc_rxns = u.rxns(ids);
+    media.lb = u.lb(ids); media.ub = u.ub(ids);
+    
+    ids = startsWith(GrPosModel.rxns,'EX_');
+    media.exc_rxns = [media.exc_rxns;GrPosModel.rxns(ids)];
+    media.lb = [media.lb;GrPosModel.lb(ids)];
+    media.ub = [media.ub;GrPosModel.ub(ids)];
+    
+    ids = startsWith(GrNegModel.rxns,'EX_');
+    media.exc_rxns = [media.exc_rxns;GrNegModel.rxns(ids)];
+    media.lb = [media.lb;GrNegModel.lb(ids)];
+    media.ub = [media.ub;GrNegModel.ub(ids)];
+    
+    [~,ia,~] = unique(media.exc_rxns);
+    media.exc_rxns=media.exc_rxns(ia);
+    media.ub=media.ub(ia);
+    media.lb=media.lb(ia);
+    % SAAC media constraints
+    tbl = readtable('../SAACmedia.xlsx','Sheet','carveme_bounds');
+    tbl.ExchangeReactions = strrep(tbl.ExchangeReactions,'''','');
+    media.lb(:)=0;
+    for i =1:numel(tbl.ExchangeReactions)
+        r=tbl.ExchangeReactions{i};
+        b=tbl.Bounds(i);
+        if b*100<10
+            media.lb(ismember(media.exc_rxns,r))=-10;
+        else
+            media.lb(ismember(media.exc_rxns,r))=-b*100;
+        end
+    end
+    media.ub=media.ub*100;% scaling the upper bound thereby allowing large-scale secretion
+end

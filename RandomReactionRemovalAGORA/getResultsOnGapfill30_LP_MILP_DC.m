@@ -47,4 +47,25 @@ end
 acc_LP = (tp_LP+tn_LP)./(tp_LP+tn_LP+fp_LP+fn_LP);
 acc_MILP = (tp_MILP+tn_MILP)./(tp_MILP+tn_MILP+fp_MILP+fn_MILP);
 acc_DC = (tp_DC+tn_DC)./(tp_DC+tn_DC+fp_DC+fn_DC);
+
+
 save('getResultsOnGapfill30_LP_MILP_DC_2')
+
+% f1 score
+p_f1_m_l = signrank(f1_MILP,f1_LP,"tail","right");
+p_f1_m_d = signrank(f1_MILP,f1_DC,"tail","right");
+% acc score
+p_acc_m_l = signrank(acc_MILP,acc_LP,"tail","right");
+p_acc_m_d = signrank(acc_MILP,acc_DC,"tail","right");
+% precision
+p_pre_m_l = signrank(pre_MILP,pre_LP,"tail","right");
+p_pre_m_d = signrank(pre_MILP,pre_DC,"tail","right");
+% recall
+p_rec_m_l = signrank(rec_MILP,rec_LP,"tail","right");
+p_rec_m_d = signrank(rec_MILP,rec_DC,"tail","right");
+% tn
+p_tn_m_l = signrank(tn_MILP,tn_LP,"tail","right");
+p_tn_m_d = signrank(tn_MILP,tn_DC,"tail","right");
+% fp
+p_fp_m_l = signrank(fp_MILP,fp_LP,"tail","left");
+p_fp_m_d = signrank(fp_MILP,fp_DC,"tail","left");

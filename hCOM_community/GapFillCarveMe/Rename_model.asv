@@ -1,0 +1,11 @@
+clear
+p = dir("Carveme_results\");
+p = {p(3:end).name}';
+
+for i=1:numel(p)
+    model = readCbModel(['./Carveme_results/',p{i},'/model.xml']);
+    model.mets = strrep(model.mets,'__','_');
+    model.mets = strrep(model.mets,'[C_c]','[c]');
+    model.mets = strrep(model.mets,'[C_e]','[e]');
+    model.mets = strrep(model.mets,'[C_p]','[p]');
+end

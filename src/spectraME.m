@@ -101,6 +101,7 @@ while any(temp_core)
     temp_core(coreRxns==1 & abs(flux)>=tol*1e-1) = 0; 
 end
 
+
 direction = zeros(n,1);
 direction(coreRxns==1&flux>0) = 1;
 direction(coreRxns==1&flux<0) = -1;
@@ -108,6 +109,12 @@ direction(coreRxns==1&flux<0) = -1;
 if strcmp(probType,'minNetMILP')
     if ~exist('solveTime', 'var') || isempty(solveTime)
         solveTime=7200;     
+    end
+    % if the core reactions is empty. This will be further used as an initial
+    % vector for the minNetMILP
+    if sum(coreRxns)==0
+        sol = optimizeCbModel(model);
+        flux = sol.x;
     end
     [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,flux,prevSols);
 elseif strcmp(probType,'minNetLP')
@@ -173,6 +180,12 @@ if nSol>1
             if strcmp(probType,'minNetMILP')
                 if ~exist('solveTime', 'var') || isempty(solveTime)
                     solveTime=7200;
+                end
+                % if the core reactions is empty. This will be further used as an initial
+                % vector for the minNetMILP
+                if sum(coreRxns)==0
+                    sol = optimizeCbModel(model);
+                    flux = sol.x;
                 end
                 [reacInd,x] = minNet(model,direction,weights,tol,steadystate,probType,solveTime,flux);
             elseif strcmp(probType,'minNetLP')

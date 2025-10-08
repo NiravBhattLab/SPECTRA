@@ -4,52 +4,115 @@ acc_LP = (tp_LP+tn_LP)./(tp_LP+tn_LP+fp_LP+fn_LP);
 acc_MILP = (tp_MILP+tn_MILP)./(tp_MILP+tn_MILP+fp_MILP+fn_MILP);
 acc_DC = (tp_DC+tn_DC)./(tp_DC+tn_DC+fp_DC+fn_DC);
 
-figure()
-titles ={'LP';'MILP';'DC'};
-boxchart([acc_LP',acc_MILP',acc_DC'])
-set(gca,'XTickLabel',titles,'fontsize',12,'FontWeight','bold')
-xlabel('Algorithm','fontweight','bold','fontsize',20)
-ylabel('Accuracy','fontweight','bold','fontsize',20)
+titles = {'minNetLP','minNetMILP','minNetDC'};
+% helper inline function to convert hex -> RGB
+hex2rgb = @(hex) sscanf(hex(2:end),'%2x%2x%2x',[1 3])/255;
+% define colors
+c1 = hex2rgb('#008080'); 
+c2 = hex2rgb('#004080'); 
+c3 = hex2rgb('#80c080');
 
 figure()
-titles ={'LP';'MILP';'DC'};
-boxchart([f1_LP',f1_MILP',f1_DC'])
-set(gca,'XTickLabel',titles,'fontsize',12,'FontWeight','bold')
+subplot(2,2,1)
+boxchart(ones(size(tp_LP')),    tp_LP',   'BoxFaceColor', c1, 'MarkerColor', c1, 'LineWidth', 2);
+hold on
+boxchart(2*ones(size(tp_MILP')), tp_MILP','BoxFaceColor', c2, 'MarkerColor', c2, 'LineWidth', 2);
+boxchart(3*ones(size(tp_DC')),   tp_DC',  'BoxFaceColor', c3, 'MarkerColor', c3, 'LineWidth', 2);
+hold off
+set(gca,'XTick',1:3,'XTickLabel',titles,'FontSize',20,'FontWeight','bold')
 xlabel('Algorithm','fontweight','bold','fontsize',20)
-ylabel('f1 score','fontweight','bold','fontsize',20)
+ylabel('True Positives','fontweight','bold','fontsize',20)
+
+subplot(2,2,2)
+boxchart(ones(size(tn_LP')),    tn_LP',   'BoxFaceColor', c1, 'MarkerColor', c1, 'LineWidth', 2);
+hold on
+boxchart(2*ones(size(tn_MILP')), tn_MILP','BoxFaceColor', c2, 'MarkerColor', c2, 'LineWidth', 2);
+boxchart(3*ones(size(tn_DC')),   tn_DC',  'BoxFaceColor', c3, 'MarkerColor', c3, 'LineWidth', 2);
+hold off
+set(gca,'XTick',1:3,'XTickLabel',titles,'FontSize',20,'FontWeight','bold')
+xlabel('Algorithm','fontweight','bold','fontsize',20)
+ylabel('True Negatives','fontweight','bold','fontsize',20)
+
+subplot(2,2,3)
+boxchart(ones(size(fn_LP')),    fn_LP',   'BoxFaceColor', c1, 'MarkerColor', c1, 'LineWidth', 2);
+hold on
+boxchart(2*ones(size(fn_MILP')), fn_MILP','BoxFaceColor', c2, 'MarkerColor', c2, 'LineWidth', 2);
+boxchart(3*ones(size(fn_DC')),   fn_DC',  'BoxFaceColor', c3, 'MarkerColor', c3, 'LineWidth', 2);
+hold off
+set(gca,'XTick',1:3,'XTickLabel',titles,'FontSize',20,'FontWeight','bold')
+xlabel('Algorithm','fontweight','bold','fontsize',20)
+ylabel('False Negatives','fontweight','bold','fontsize',20)
+
+subplot(2,2,4)
+boxchart(ones(size(fp_LP')),    fp_LP',   'BoxFaceColor', c1, 'MarkerColor', c1, 'LineWidth', 2);
+hold on
+boxchart(2*ones(size(fp_MILP')), fp_MILP','BoxFaceColor', c2, 'MarkerColor', c2, 'LineWidth', 2);
+boxchart(3*ones(size(fp_DC')),   fp_DC',  'BoxFaceColor', c3, 'MarkerColor', c3, 'LineWidth', 2);
+hold off
+set(gca,'XTick',1:3,'XTickLabel',titles,'FontSize',20,'FontWeight','bold')
+xlabel('Algorithm','fontweight','bold','fontsize',20)
+ylabel('False Positives','fontweight','bold','fontsize',20)
+
 
 figure()
-boxchart([tp_LP',tp_MILP',tp_DC'])
-set(gca,'XTickLabel',titles,'fontsize',12,'FontWeight','bold')
-xlabel('Algorithm','fontweight','bold','fontsize',20)
-ylabel('TP','fontweight','bold','fontsize',20)
+% Use tiledlayout to control spacing
+tiledlayout(2,1,'TileSpacing','compact','Padding','compact')  % reduces space between subplots
+
+% First subplot: Accuracy
+ax1 = nexttile;
+boxchart(0.4*ones(size(acc_LP')),    acc_LP',   'BoxFaceColor', c1, 'MarkerColor', c1, 'LineWidth', 2);
+hold on
+boxchart(ones(size(acc_MILP')), acc_MILP','BoxFaceColor', c2, 'MarkerColor', c2, 'LineWidth', 2);
+boxchart(1.6*ones(size(acc_DC')),   acc_DC',  'BoxFaceColor', c3, 'MarkerColor', c3, 'LineWidth', 2);
+hold off
+set(gca,'LineWidth',2) 
+set(ax1,'YTick',[0,0.5,1],'XTick',[],'FontSize',20,'FontWeight','bold')
+xlim([0.1, 1.9])
+ylim([0, 1])
+ylabel('Accuracy','FontWeight','bold','FontSize',30)
+
+% Second subplot: F1 score
+ax2 = nexttile;
+boxchart(0.4*ones(size(f1_LP')),    f1_LP',   'BoxFaceColor', c1, 'MarkerColor', c1, 'LineWidth', 2);
+hold on
+boxchart(ones(size(f1_MILP')), f1_MILP','BoxFaceColor', c2, 'MarkerColor', c2, 'LineWidth', 2);
+boxchart(1.6*ones(size(f1_DC')),   f1_DC',  'BoxFaceColor', c3, 'MarkerColor', c3, 'LineWidth', 2);
+hold off
+set(gca,'LineWidth',2) 
+set(ax2,'YTick',[0,0.5,1],'XTick',[],'FontSize',15,'FontWeight','bold')
+xlim([0.1, 1.9])
+ylim([0, 1])
+ylabel('F1 score','FontWeight','bold','FontSize',30)
+
+
 
 figure()
-boxchart([tn_LP',tn_MILP',tn_DC'])
-set(gca,'XTickLabel',titles,'fontsize',12,'FontWeight','bold')
-xlabel('Algorithm','fontweight','bold','fontsize',20)
-ylabel('TN','fontweight','bold','fontsize',20)
+% Use tiledlayout to control spacing
+tiledlayout(2,1,'TileSpacing','compact','Padding','compact')  % reduces space between subplots
 
-figure()
-boxchart([fn_LP',fn_MILP',fn_DC'])
-set(gca,'XTickLabel',titles,'fontsize',12,'FontWeight','bold')
-xlabel('Algorithm','fontweight','bold','fontsize',20)
-ylabel('FN','fontweight','bold','fontsize',20)
+% First subplot
+ax1 = nexttile;
+boxchart(0.4*ones(size(pre_LP')),    pre_LP',   'BoxFaceColor', c1, 'MarkerColor', c1, 'LineWidth', 2);
+hold on
+boxchart(ones(size(pre_MILP')), pre_MILP','BoxFaceColor', c2, 'MarkerColor', c2, 'LineWidth', 2);
+boxchart(1.6*ones(size(pre_DC')),   pre_DC',  'BoxFaceColor', c3, 'MarkerColor', c3, 'LineWidth', 2);
+hold off
+set(gca,'LineWidth',2) 
+set(ax1,'YTick',[0,0.5,1],'XTick',[],'FontSize',15,'FontWeight','bold')
+xlim([0.1, 1.9])
+ylim([0, 1])
+ylabel('Precision','fontweight','bold','fontsize',30)
 
-figure()
-boxchart([fp_LP',fp_MILP',fp_DC'])
-set(gca,'XTickLabel',titles,'fontsize',12,'FontWeight','bold')
-xlabel('Algorithm','fontweight','bold','fontsize',20)
-ylabel('FP','fontweight','bold','fontsize',20)
-
-figure()
-boxchart([pre_LP',pre_MILP',pre_DC'])
-set(gca,'XTickLabel',titles,'fontsize',12,'FontWeight','bold')
-xlabel('Algorithm','fontweight','bold','fontsize',20)
-ylabel('Precision','fontweight','bold','fontsize',20)
-
-figure()
-boxchart([rec_LP',rec_MILP',rec_DC'])
-set(gca,'XTickLabel',titles,'fontsize',12,'FontWeight','bold')
-xlabel('Algorithm','fontweight','bold','fontsize',20)
-ylabel('Recall','fontweight','bold','fontsize',20)
+% Second subplot
+ax2 = nexttile;
+boxchart(0.4*ones(size(rec_LP')),    rec_LP',   'BoxFaceColor', c1, 'MarkerColor', c1, 'LineWidth', 2);
+hold on
+boxchart(ones(size(rec_MILP')), rec_MILP','BoxFaceColor', c2, 'MarkerColor', c2, 'LineWidth', 2);
+boxchart(1.6*ones(size(rec_DC')),   rec_DC',  'BoxFaceColor', c3, 'MarkerColor', c3, 'LineWidth', 2);
+hold off
+set(gca,'LineWidth',2) 
+set(ax2,'YTick',[0,0.5,1],'XTick',[0.4,1,1.6],'XTickLabel',titles,'FontSize',16,'FontWeight','bold')
+xlim([0.1, 1.9])
+ylim([0, 1])
+xlabel('Algorithm','fontweight','bold','fontsize',30)
+ylabel('Recall','fontweight','bold','fontsize',30)
