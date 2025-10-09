@@ -8,7 +8,7 @@ load('Bigg2VMHEx.mat') % to rename the scores obtained
 Folder_path = dir('./CarvemeDraftModels');
 Folder_path = {Folder_path(3:end).name};
 Folder_path = strrep(Folder_path,'.mat','');
-abbr = Folder_path; % abbr defines the model names that will be added as prefix to the reations and metabolites
+abbr = Folder_path; % abbr defines the model names that will be added as prefix to the reactions and metabolites
 
 % Loading the universal models
 load('./Universal_models/carvemeModelConv') % Carveme's universal model
@@ -16,7 +16,6 @@ u = model;
 load('./Universal_models/carvemeModelGNconv') % Carveme's universal gram negative model
 load('./Universal_models/carvemeModelGPconv') % Carveme's universal gram positive model
 
-media = getSAACMedia(u,GrPosModel,GrNegModel); % getting the SAAC media
 stain_info = readtable('gram_stain.csv'); % getting the gram staining details
 
 % paramters for spectraME
@@ -54,7 +53,7 @@ exc_rxnFormulas = exc_rxnFormulas(ia);
 % creating the universal model for the community
 S=[];lb=[];ub=[];c=[];b=[];rxns=[];mets=[];core=[];weight=[];metNames=[];rxnNames=[];
 for i=1:n_models
-    load(Folder_path{i}) % loading the microbial model
+    load(['./CarvemeDraftModels/',Folder_path{i}]) % loading the microbial model
 
     % setting the lower bound of ATPM to 0.1
     model.lb(ismember(model.rxns,'ATPM')) = 0.1;
@@ -101,7 +100,7 @@ for i=1:n_models
     
     % the bounds will be same as that in the microbial model
     % except for the reactions that are not present in the microbial model. For these reactions universal model constraints will be used
-    new_lb = UmodelTemp.lb;new_ub = UmodelTemp.ub; 
+    new_lb = UmodelTemp.lb; new_ub = UmodelTemp.ub; 
     [loca,locb] = ismember(model.rxns,UmodelTemp.rxns);
     locb = locb(locb~=0);
     new_lb(locb)=model.lb(loca);new_ub(locb)=model.ub(loca);
@@ -195,8 +194,8 @@ ConsComModel = removeRxns(ComModel,ComModel.rxns(setdiff(1:numel(ComModel.rxns),
 % updating the cores and weights accordingly
 [~,ib] = ismember(ConsComModel.rxns,ComModel.rxns);
 weight = weight(ib); core = core(ib);
-[MiComModel,LPS] = spectraME(ConsComModel,find(core),tol,consType,weight,nSol,altSolMethod,probType,7200*5); % gapfilling the community model
-models = getIndividualModels(MiComModel,abbr) % getting the individual models from the community model
+[MiComModel,LPS] = spectraME(ConsComModel,find(core),tol,consType,weight,nSol,altSolMethod,probType,7200); % gapfilling the community model
+models = getIndividualModels(MiComModel,abbr); % getting the individual models from the community model
 
 % merging the actual models with the newly obtained models
 for k=1:numel(abbr)
@@ -207,8 +206,7 @@ for k=1:numel(abbr)
     clear model Model gapFilledModel
 end
 
-end
-
+save('Results_CommunityGapFill')
 function Model = getUnionModel(Model,model)
     Model = mergeTwoModels(Model, model);
 end
