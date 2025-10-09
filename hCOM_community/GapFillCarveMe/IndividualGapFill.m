@@ -85,7 +85,7 @@ for k=1:numel(remaining)
         Umodel.lb(ismember(Umodel.rxns,bio_rxn{1})) = 0.1;
         % lower bound to the ATPM reaction
         Umodel.lb(ismember(Umodel.rxns,'ATPM')) = 0.1;
-        [Model,LPS] = spectraME(Umodel,[],tol,consType,weights,nSol,altSolMethod,probType,7200*5);
+        [Model,LPS] = spectraME(Umodel,[],tol,consType,weights,nSol,altSolMethod,probType,7200);
         Model = getUnionModel(Model,model);
         % chekching if the model grows
         sol = optimizeCbModel(Model);

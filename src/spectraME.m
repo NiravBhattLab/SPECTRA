@@ -38,6 +38,7 @@ function [Model,LPS] = spectraME(model,coreRxns,tol,consType,weights,nSol,altSol
 % .. Author:
 %       - Pavan Kumar S, BioSystems Engineering and control (BiSECt) lab, IIT Madras
 
+
 if ~exist('tol', 'var') || isempty(tol)
     tol=1e-4;     
 end
@@ -111,7 +112,7 @@ if strcmp(probType,'minNetMILP')
         solveTime=7200;     
     end
     % if the core reactions is empty. This will be further used as an initial
-    % vector for the minNetMILP
+    % solution for the minNetMILP
     if sum(coreRxns)==0
         sol = optimizeCbModel(model);
         flux = sol.x;
@@ -127,6 +128,12 @@ elseif strcmp(probType,'growthOptim')
 elseif strcmp(probType,'tradeOff')
     if ~exist('solveTime', 'var') || isempty(solveTime)
         solveTime=7200;     
+    end
+    % if the core reactions is empty. This will be further used as an initial
+    % solution for the tradeoff
+    if sum(coreRxns)==0
+        sol = optimizeCbModel(model);
+        flux = sol.x;
     end
     [reacInd,x] = tradeOff(model,direction,weights,tol,steadystate,solveTime,flux,prevSols);
 end
@@ -182,7 +189,7 @@ if nSol>1
                     solveTime=7200;
                 end
                 % if the core reactions is empty. This will be further used as an initial
-                % vector for the minNetMILP
+                % solution for the minNetMILP
                 if sum(coreRxns)==0
                     sol = optimizeCbModel(model);
                     flux = sol.x;
@@ -198,6 +205,12 @@ if nSol>1
             elseif strcmp(probType,'tradeOff')
                 if ~exist('solveTime', 'var') || isempty(solveTime)
                     solveTime=7200;
+                end
+                % if the core reactions is empty. This will be further used as an initial
+                % solution for the tradeoff
+                if sum(coreRxns)==0
+                    sol = optimizeCbModel(model);
+                    flux = sol.x;
                 end
                 [reacInd,x] = tradeOff(model,direction,weights,tol,steadystate,solveTime,flux);
             end

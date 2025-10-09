@@ -53,6 +53,9 @@ end
 if ~exist('consType', 'var') || isempty(consType)
     consType='stoichiometry';  
 end
+if ~exist('solveTime', 'var') || isempty(solveTime)
+    solveTime=7200;     
+end
 
 [~,n] = size(model.S); % number of metabolites and reactions
 IrR = model.ub<=0; % reactions irreversible in reverse direction
@@ -127,15 +130,6 @@ elseif strcmp(probType,'minNetDC')
 elseif strcmp(probType,'growthOptim')
     [reacInd,x] = growthOptim(model,direction,weights,tol,steadyState);
 elseif strcmp(probType,'tradeOff')
-    if ~exist('solveTime', 'var') || isempty(solveTime)
-        solveTime=7200;
-    end
-    % if the core reactions is empty. This will be further used as an initial
-    % solution for the minNetMILP
-    if sum(coreRxns)==0
-        sol = optimizeCbModel(model);
-        flux = sol.x;
-    end
     [reacInd,x] = tradeOff(model,direction,weights,tol,steadyState,solveTime,flux);
 end
 

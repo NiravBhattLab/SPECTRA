@@ -148,7 +148,7 @@ elseif strcmp(probType,'minNetMILP')
     end
     solution = solveCobraMILP(MILPproblem,'timeLimit', solveTime);
     stat =solution.stat;
-    if stat==1
+    if stat==1||stat==3
         x = solution.cont;
         z = solution.int;
         reacInd = abs(x(1:n))>=tol*1e-7;
