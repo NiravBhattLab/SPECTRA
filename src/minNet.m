@@ -153,6 +153,9 @@ elseif strcmp(probType,'minNetMILP')
         z = solution.int;
         reacInd = abs(x(1:n))>=tol*1e-7;
     else
+        fprintf('%s%s\n',num2str(solution.stat),' = solution.stat')
+        fprintf('%s%s\n',num2str(solution.origStat),' = solution.origStat')
+        warning('MILP solution may not be optimal')
         x=[];z=[];reacInd=[];
     end
     % reacInd = abs(x(1:n))~=0;    

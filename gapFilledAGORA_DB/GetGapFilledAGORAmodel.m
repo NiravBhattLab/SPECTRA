@@ -37,7 +37,7 @@ for i=1:numel(p)
         % save the model if it is consistent
         save(['./GapfilledModelsMILP_180s/',p{i}],'model')
     else
-        % save the model if inconsistent and also not it down
+        % save the model if inconsistent and also note it down
         save(['./GapfilledModelsMILP_180s/',p{i}],'model')
         load('inconsModels')
         inconsModels{end+1,1}=p{i};

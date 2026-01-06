@@ -13,7 +13,7 @@ for i =1:numel(p)
     nBlkAG2(i) = numel(model.rxns)-numel(a);
     m = model;
     clear model
-    load(['./AGORA3/GapfilledModelsMILP_180s/',p{i}])
+    load(['./AGORA_new_db/GapfilledModelsMILP_180s/',p{i}])
     temp = numel(setdiff(m.rxns,model.rxns)); % reactions that could not be made consistent
     nRxnsAG3(i) = numel(model.rxns)+temp;
     nBlkAG3(i) = temp;

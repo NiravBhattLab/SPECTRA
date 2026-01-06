@@ -99,9 +99,9 @@ temp1 = speye(n_);
 temp = find(model.rev(dir0));
 temp1 = temp1(temp,:);
 
-Aeq2 = [sparse(sum(temp),n), -1*temp1, speye(n_rev), speye(n_rev)];
-beq2 = zeros(sum(temp),1);
-csenseeq2 = repmat('E',sum(temp),1); 
+Aeq2 = [sparse(numel(temp),n), -1*temp1, speye(n_rev), speye(n_rev)];
+beq2 = zeros(numel(temp),1);
+csenseeq2 = repmat('E',numel(temp),1); 
 
 % constraint linking the binary variable, a and the flux through the
 % reversible non-core reactions
@@ -109,7 +109,7 @@ csenseeq2 = repmat('E',sum(temp),1);
 temp1 = speye(n);
 temp1 = temp1(dir0 & model.rev,:); % ids of non-core reversible reactions
 temp = sum(dir0 & model.rev);
-Aineq4 = [temp1, sparse(temp,n_), -1*spdiag(tol*ones(temp,1)), spdiag(model.lb(dir0 & model.rev))];
+Aineq4 = [temp1, sparse(temp,n_), -1*spdiag(tol*ones(temp,1)), -1*spdiag(model.lb(dir0 & model.rev))];
 bineq4 = zeros(temp,1);
 csenseineq4 = repmat('G',temp,1);
 
@@ -152,6 +152,9 @@ if stat==1||stat==3
     z = solution.int;
     reacInd = abs(x(1:n))>=tol*1e-7;
 else
+    fprintf('%s%s\n',num2str(solution.stat),' = solution.stat')
+    fprintf('%s%s\n',num2str(solution.origStat),' = solution.origStat')
+    warning('MILP solution may not be optimal')
     x=[];z=[];reacInd=[];
 end
 end

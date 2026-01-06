@@ -1,9 +1,9 @@
 clear
 model = three_pathway_toy_model();
-model.ub(:) =10;
-model.ub([1,6,9]) = 1;
+model.ub(:) =10; 
+model.ub([1,6,9]) = 1; % constraining the media reactions
 
-model.c(5)=1;
+model.c(5)=1; % settin the objective function
 core = 5;
 tol=1e-5;
 

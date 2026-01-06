@@ -1,0 +1,88 @@
+clear
+changeCobraSolver('gurobi','all')
+changeCobraSolverParams('LP', 'feasTol', 1e-8);
+changeCobraSolverParams('LP', 'optTol', 1e-8);
+tol=1e-3; tol_cc= 1e-5;
+load('Bigg2VMHEx.mat')
+
+p = dir('./Carveme_results/');
+p = {p(3:end-1).name}';
+
+% Loading the universal models
+load('./Universal_models/carvemeModelConv_with_biomass.mat') % Carveme's universal model
+u = model;
+load('./Universal_models/carvemeModelGNconv_with_biomass.mat') % Carveme's universal gram negative model
+load('./Universal_models/carvemeModelGPconv_with_biomass.mat') % Carveme's universal gram positive model
+
+% paramters for spectraMe
+consType = 'stoichiometry';
+nSol = 1;
+altSolMethod = {};
+probType = 'tradeOff';
+stain_info = readtable('gram_stain.csv'); % getting the gram staining details
+
+for k=1:numel(p) 
+        i = find(ismember(stain_info.Strain,p{k}));
+        if strcmp(stain_info.stain{i},'0')
+            Umodel1 = u;
+        elseif strcmp(stain_info.stain{i},'+')
+            Umodel1 = GrPosModel;
+        elseif strcmp(stain_info.stain{i},'-')
+            Umodel1 = GrNegModel;
+        else
+            error('Gram staining information not available');
+        end
+
+
+        % building a consistent universal model
+        ConsReacIDS = spectraCC(Umodel1,tol_cc);
+        if ~ismember(find(Umodel1.c),ConsReacIDS)
+            error('inconsistent biomass reaction')
+        end
+        Umodel = removeRxns(Umodel1,Umodel1.rxns(setdiff(1:numel(Umodel1.rxns),ConsReacIDS)));
+        scores = readtable(['Carveme_results\',p{i},'\scores.tsv'],'FileType', 'text', 'Delimiter', '\t');
+        scores = rename_reactions(scores,Bigg2VMHEx); % renaming the reactions in accordance with the universal model
+
+        % verification step
+        if sum(ismember(scores.reaction,Umodel1.rxns))~=numel(scores.reaction)
+            error('missing reactions in the universal model')
+        end
+
+        % getting the weights for the gapfilling step
+        weights = -1*ones(numel(Umodel.rxns),1); % -1 to all the enzymatic reactions without a score
+        [ia,ib] = ismember(scores.reaction, Umodel.rxns); % for all the reactions that have scores
+        weights(ib(ia)) = scores.normalized_score(ia);
+        % assigining zero weights to the exchange reactions
+        idx = contains(Umodel.rxns,'EX_');
+        weights(idx) = 0;
+
+        % lower bound to the biomas reaction
+        Umodel.lb(find(Umodel.c)) = 0.1;
+        % lower bound to the ATPM reaction
+        Umodel.lb(ismember(Umodel.rxns,'ATPM')) = 0.1;
+        temp_sol = optimizeCbModel(Umodel);
+        if temp_sol.stat~=1
+            error("Infeasible model")
+        end
+        [model,LPS] = spectraME(Umodel,[],tol,consType,weights,nSol,altSolMethod,probType,7200);
+        
+
+        % chekching if the model grows
+        sol = optimizeCbModel(model);
+        if sol.f ==0 
+            error('The microbe does not grow')
+        end
+        save(['./hComDraftModels/',p{i}],'model')
+
+        clear model Umodel scores weights Umodel1
+end
+
+
+function scores = rename_reactions(scores,Bigg2VMHEx)
+    [ia,ib] = ismember(scores.reaction,Bigg2VMHEx.rxns.bigg);
+    scores.reaction(ia) = Bigg2VMHEx.rxns.vmh(ib(find(ib)));
+    % conversion of carveme rxns
+    scores.reaction = regexprep(scores.reaction,'^R_','');
+    scores.reaction = regexprep(scores.reaction,'_e$','(e)');
+    scores.reaction = regexprep(scores.reaction,'_c$','(c)');
+end
