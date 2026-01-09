@@ -16,7 +16,7 @@
 
 ## Overview
 
-SPECTRA is a unified, scalable framework for reconstructing metabolic models from multi-omics data. It integrates diverse optimization strategies (linear and mixed-integer programming) to extract metabolic networks at multiple biological scales—from minimal reactomes and context-specific models (CSMs) to microbial community models and multi-tissue models. 
+SPECTRA is a unified, scalable framework for reconstructing metabolic models from multi-omics data. It integrates diverse optimization strategies (linear and mixed-integer programming) to extract metabolic networks at multiple biological scales-from minimal reactomes and context-specific models (CSMs) to microbial community models and multi-tissue models. 
 
 
 ## Installation & Setup
