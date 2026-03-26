@@ -1,5 +1,0 @@
-function model = get_rand_wts_toy_model()
-  reactions = {'r1','r2','r3','r4','r5','r6','r7'};
-  rxnFormula = {'-> A','A <=> B','B -> C','D <=> C','D <=>','B <=>','C <=>'};
-  model = createModel(reactions,reactions,rxnFormula);
-end
