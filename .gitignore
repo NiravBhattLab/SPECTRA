@@ -41,5 +41,18 @@ gapFilledAGORA_DB/tsne_mat_all_rxns.csv
 gapFilledAGORA_DB/tsne_mat_new_rxns.csv
 
 hCOM_community/CommunityGapFilling/Carveme_results
-hCOM_community/CommunityGapFilling/old_results_with_carveme_based_draftModelBuildingVisualisations/Results/tsne_mat_all_rxns.csv
+hCOM_community/CommunityGapFilling/old_results_with_carveme_based_draftModelBuilding
+
 Visualisations/Results/tsne_mat_new_rxns.csv
+
+gapFilledAGORA_DB/AGORA2_details_copy.xlsx
+gapFilledAGORA_DB/__pycache__/
+gapFilledAGORA_DB/check_missing.py
+gapFilledAGORA_DB/download_sequences.py
+gapFilledAGORA_DB/inspect_excel.py
+gapFilledAGORA_DB/missing_ids.txt
+gapFilledAGORA_DB/protein_sequences/
+gapFilledAGORA_DB/protein_sequences_test/
+gapFilledAGORA_DB/test_links.py
+
+Verify_new_reactions_AGORA_using_DL/results/
