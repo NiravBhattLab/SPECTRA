@@ -1,4 +1,4 @@
-MeMs = {'sprintcore','swiftcore','fastcore'};
+MeMs = {'spectra','swiftcore','fastcore'};
 for k=1:numel(MeMs)
     getCancerReactionsCoverage(MeMs{k});
 end
