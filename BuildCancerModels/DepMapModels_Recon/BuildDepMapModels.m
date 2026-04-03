@@ -22,8 +22,8 @@ end
 if ~exist('./swiftcore','dir')
     mkdir('./swiftcore')
 end
-if ~exist('./sprintcore','dir')
-    mkdir('./sprintcore')
+if ~exist('./spectra','dir')
+    mkdir('./spectra')
 end
 
 FC_times = []; SP_times=[]; SW_times=[];
@@ -50,12 +50,12 @@ for i=1:size(RxnImp,2)
     SW_times(i)=t;
     save(['./swiftcore/',context{i}],"m")
     
-    % SPRINTCORE model
+    % SPECTRA model
     tic
-    m = sprintcore(model,core,1e-4,[],weights);
+    m =  spectraME(model,core,1e-4,[],weights);
     t=toc;
     SP_times(i)=t;
-    save(['./sprintcore/',context{i}],"m")
+    save(['./spectra/',context{i}],"m")
 end
 clear m
 save('Results_BuildDepMapModels')
