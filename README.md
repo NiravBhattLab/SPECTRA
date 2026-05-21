@@ -29,7 +29,7 @@ SPECTRA is a unified, scalable framework for reconstructing metabolic models fro
 ### Installation
 
 ```bash
-git clone https://github.com/NiravBhattLab/SPECTRA.git
+git clone https://github.com/bisect-group/SPECTRA.git
 cd SPECTRA
 ```
 
