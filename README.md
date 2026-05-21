@@ -26,7 +26,7 @@ SPECTRA is a unified, scalable framework for reconstructing metabolic models fro
 # Software requirements
 ### OS Requirements
 The package has been tested on the following systems:
-+ Windows: 10 and 11
++ Windows: 10
 + Linux: Ubuntu 22.04
 
 ### Prerequisites
