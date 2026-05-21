@@ -20,11 +20,21 @@ SPECTRA is a unified, scalable framework for reconstructing metabolic models fro
 
 ## Installation & Setup
 
-### Prerequisites
+# Hardware requirements
+`SPECTRA` package requires only a standard computer with enough RAM to support the in-memory operations.
 
+# Software requirements
+### OS Requirements
+The package has been tested on the following systems:
++ Windows: 10 and 11
++ Linux: Ubuntu 22.04
+
+### Prerequisites
 - MATLAB
 - [COBRA toolbox](https://opencobra.github.io/cobratoolbox/stable/index.html)
 - CPLEX or Gurobi (for optimization)
+
+All the simulations done in this work were implemented with the COBRA toolbox 3.0 as an interface. Optimizations were performed using Gurobi9.1.2, in a Dell Precision 3640 workstation (IntelCore i7-10700 CPU, 32GB RAM).
 
 ### Installation
 
